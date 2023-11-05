@@ -37,9 +37,10 @@ public:
             m_iMasspoint1 = masspoint1;
             m_iMasspoint2 = masspoint2;
             m_fInitialLength = initialLength;
-            m_fCurrentLength = initialLength;
             m_fStiffness = stiffness;
         }
+
+        void setStiffness(float stiffness) { m_fStiffness = stiffness; }
 
         void computeForces(std::vector<MassPoint>& massPoints) {
             // calculate distance between mp1 and mp2
@@ -57,7 +58,6 @@ public:
         int m_iMasspoint2;
         float m_fStiffness;
         float m_fInitialLength;
-        float m_fCurrentLength;
     };
 
     // Construtors
@@ -109,8 +109,6 @@ private:
     float m_iTimestep;
     bool timestepOverwrite{ false };
     bool useGroundCollision{ false };
-    float springStiffness;
-    float mass;
     bool useGraviatation{ false };
 
     // Mass Points

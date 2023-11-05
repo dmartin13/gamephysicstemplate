@@ -6,7 +6,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator() {
     m_fMass = 1.f;
     m_fStiffness = 1.f;
     m_fDamping = 0.f;
-    m_iIntegrator = 0;
+    m_iIntegrator = EULER;
 
     m_externalForce = Vec3();
 
@@ -148,6 +148,8 @@ void MassSpringSystemSimulator::computeDemoOne() {
     std::cout << "Position of MP2: " << m_massPoints[mp2].m_position << std::endl;
     std::cout << "Velocity of MP1: " << m_massPoints[mp1].m_velocity << std::endl;
     std::cout << "Velocity of MP2: " << m_massPoints[mp2].m_velocity << std::endl;
+
+    reset();
 }
 
 void MassSpringSystemSimulator::setupDemoTwo() {
@@ -175,9 +177,6 @@ void MassSpringSystemSimulator::setupDemoThree() {
 }
 
 void MassSpringSystemSimulator::setupDemoFour() {
-
-    setMass(10.f);
-    setStiffness(40.f);
 
     // Object 1 (arm with box)
     int p00 = addMassPoint(Vec3(-4.f, 2.f, 0.f), Vec3(0.f, 0.f, 0.f), true);
@@ -303,6 +302,9 @@ void MassSpringSystemSimulator::setMass(float mass) { m_fMass = mass; }
 
 void MassSpringSystemSimulator::setStiffness(float stiffness) {
     m_fStiffness = stiffness;
+    for (auto& s : m_springs) {
+        s.setStiffness(m_fStiffness);
+    }
 }
 
 void MassSpringSystemSimulator::setDampingFactor(float damping) {
@@ -353,6 +355,13 @@ void MassSpringSystemSimulator::integrate(float timeStep) {
     }
 }
 
+void MassSpringSystemSimulator::applyDamping(
+    std::vector<MassPoint>& massPoints) {
+    for (auto& p : massPoints) {
+        p.m_force -= m_fDamping * p.m_velocity;
+    }
+}
+
 void MassSpringSystemSimulator::integrateEuler(float timeStep) {
     for (auto& p : m_massPoints) {
         if (!p.m_isFixed) {
@@ -392,10 +401,3 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
 }
 
 void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {}
-
-void MassSpringSystemSimulator::applyDamping(
-    std::vector<MassPoint>& massPoints) {
-    for (auto& p : massPoints) {
-        p.m_force -= m_fDamping * p.m_velocity;
-    }
-}
