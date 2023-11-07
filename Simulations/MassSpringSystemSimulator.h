@@ -21,42 +21,22 @@ public:
 
         void clearForce() { m_force = Vec3(0, 0, 0); }
 
-        void addGravity(Vec3 gravity) { m_velocity += gravity; }
-
         Vec3 m_position;
         Vec3 m_velocity;
         Vec3 m_force;
-        // Vec3 m_mass;
         bool m_isFixed;
     };
 
     struct Spring {
 
-        Spring(int masspoint1, int masspoint2, float initialLength,
-            float stiffness) {
+        Spring(int masspoint1, int masspoint2, float initialLength) {
             m_iMasspoint1 = masspoint1;
             m_iMasspoint2 = masspoint2;
             m_fInitialLength = initialLength;
-            m_fStiffness = stiffness;
-        }
-
-        void setStiffness(float stiffness) { m_fStiffness = stiffness; }
-
-        void computeForces(std::vector<MassPoint>& massPoints) {
-            // calculate distance between mp1 and mp2
-            Vec3 d = massPoints[m_iMasspoint1].m_position -
-                massPoints[m_iMasspoint2].m_position;
-            float dist = sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
-            Vec3 f1 = -m_fStiffness * (dist - m_fInitialLength) * (d / dist);
-            Vec3 f2 = -f1;
-
-            massPoints[m_iMasspoint1].m_force += f1;
-            massPoints[m_iMasspoint2].m_force += f2;
         }
 
         int m_iMasspoint1;
         int m_iMasspoint2;
-        float m_fStiffness;
         float m_fInitialLength;
     };
 
@@ -79,6 +59,8 @@ public:
     void setMass(float mass);
     void setStiffness(float stiffness);
     void setDampingFactor(float damping);
+    void setGravity(float gravity);
+    void setBounceFactor(float bounceFactor);
     int addMassPoint(Vec3 position, Vec3 Velocity, bool isFixed);
     void addSpring(int masspoint1, int masspoint2, float initialLength);
     int getNumberOfMassPoints();
@@ -90,6 +72,7 @@ public:
     void integrateMidpoint(float timeStep);
     void integrateLeapfrog(float timeStep);
     void integrate(float timeStep);
+    void computeForces(std::vector<MassPoint>& massPoints);
     void applyDamping(std::vector<MassPoint>& massPoints);
 
     void computeDemoOne();
@@ -109,7 +92,8 @@ private:
     float m_iTimestep;
     bool timestepOverwrite{ false };
     bool useGroundCollision{ false };
-    bool useGraviatation{ false };
+    float m_fGravity{ 0.0f };
+    float m_fBounceFactor{ 0.0f };
 
     // Mass Points
     std::vector<MassPoint> m_massPoints;

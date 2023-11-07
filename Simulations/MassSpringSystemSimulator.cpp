@@ -45,13 +45,15 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
             &m_iIntegrator, "");
         TwAddVarRW(DUC->g_pTweakBar, "Ground Collision", TW_TYPE_BOOLCPP,
             &useGroundCollision, "");
+        TwAddVarRW(DUC->g_pTweakBar, "Bounce Factor", TW_TYPE_FLOAT,
+            &m_fBounceFactor, "min=0.0");
         TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping,
             "min=0.0");
         TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness,
             "min=0.01");
         TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01");
-        TwAddVarRW(DUC->g_pTweakBar, "Gravitation", TW_TYPE_BOOLCPP,
-            &useGraviatation, "");
+        TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &m_fGravity,
+            "min=0.0");
         break;
     case 4:
         break;
@@ -101,7 +103,8 @@ void MassSpringSystemSimulator::computeDemoOne() {
     setStiffness(40.f);
     setDampingFactor(0.0f);
     useGroundCollision = false;
-    useGraviatation = false;
+    setGravity(0.0f);
+    setBounceFactor(0.0f);
 
     int mp1 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), false);
     int mp2 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), false);
@@ -111,10 +114,7 @@ void MassSpringSystemSimulator::computeDemoOne() {
         p.clearForce();
     }
 
-    for (auto& s : m_springs) {
-        s.computeForces(m_massPoints);
-    }
-
+    computeForces(m_massPoints);
     integrateEuler(0.1);
 
     std::cout << "Results after one step of Euler Integration with deltaT=0.1:"
@@ -133,7 +133,8 @@ void MassSpringSystemSimulator::computeDemoOne() {
     setStiffness(40.f);
     setDampingFactor(0.0f);
     useGroundCollision = false;
-    useGraviatation = false;
+    setGravity(0.0f);
+    setBounceFactor(0.0f);
 
     mp1 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), false);
     mp2 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), false);
@@ -143,9 +144,7 @@ void MassSpringSystemSimulator::computeDemoOne() {
         p.clearForce();
     }
 
-    for (auto& s : m_springs) {
-        s.computeForces(m_massPoints);
-    }
+    computeForces(m_massPoints);
 
     integrateMidpoint(0.1);
 
@@ -168,7 +167,8 @@ void MassSpringSystemSimulator::setupDemoTwo() {
     setStiffness(40.f);
     setDampingFactor(0.0f);
     useGroundCollision = false;
-    useGraviatation = false;
+    setGravity(0.0f);
+    setBounceFactor(0.0f);
 
     int mp1 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), false);
     int mp2 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), false);
@@ -184,7 +184,8 @@ void MassSpringSystemSimulator::setupDemoThree() {
     setStiffness(40.f);
     setDampingFactor(0.0f);
     useGroundCollision = false;
-    useGraviatation = false;
+    setGravity(0.0f);
+    setBounceFactor(0.0f);
 
     int mp1 = addMassPoint(Vec3(0, 0, 0), Vec3(-1, 0, 0), false);
     int mp2 = addMassPoint(Vec3(0, 2, 0), Vec3(1, 0, 0), false);
@@ -241,9 +242,7 @@ void MassSpringSystemSimulator::setupDemoFour() {
     // Object 3 TBD
 }
 
-void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {
-    // apply the gravity here?
-}
+void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {}
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
     // first check if we have overwritten the timestep. If so, the use the
@@ -251,27 +250,26 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
     if (timestepOverwrite) {
         timeStep = m_iTimestep;
     }
-    // update current setup for each frame
+    // clear forces
     for (auto& p : m_massPoints) {
         p.clearForce();
-        if (useGraviatation) {
-            p.addGravity(Vec3(0.f, -9.81f * timeStep, 0.f));
-        }
     }
-
-    for (auto& s : m_springs) {
-        s.computeForces(m_massPoints);
-    }
+    // force computation
+    computeForces(m_massPoints);
+    // damping
     applyDamping(m_massPoints);
 
+    // integrate the timestep
     integrate(timeStep);
 
+    // collision on floor
     if (useGroundCollision) {
         for (auto& p : m_massPoints) {
             if (p.m_position.y < -1.f) {
+                // reset position from floor
                 p.m_position.y = -1.0001f;
-                // bounce back from ground
-                p.m_velocity.y *= -1.f;
+                // bounce back from floor
+                p.m_velocity.y *= -m_fBounceFactor;
             }
         }
     }
@@ -309,13 +307,18 @@ void MassSpringSystemSimulator::setMass(float mass) { m_fMass = mass; }
 
 void MassSpringSystemSimulator::setStiffness(float stiffness) {
     m_fStiffness = stiffness;
-    for (auto& s : m_springs) {
-        s.setStiffness(m_fStiffness);
-    }
 }
 
 void MassSpringSystemSimulator::setDampingFactor(float damping) {
     m_fDamping = damping;
+}
+
+void MassSpringSystemSimulator::setGravity(float gravity) {
+    m_fGravity = gravity;
+}
+
+void MassSpringSystemSimulator::setBounceFactor(float bounceFactor) {
+    m_fBounceFactor = bounceFactor;
 }
 
 int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 velocity,
@@ -326,8 +329,7 @@ int MassSpringSystemSimulator::addMassPoint(Vec3 position, Vec3 velocity,
 
 void MassSpringSystemSimulator::addSpring(int masspoint1, int masspoint2,
     float initialLength) {
-    m_springs.push_back(
-        Spring(masspoint1, masspoint2, initialLength, m_fStiffness));
+    m_springs.push_back(Spring(masspoint1, masspoint2, initialLength));
 }
 
 int MassSpringSystemSimulator::getNumberOfMassPoints() {
@@ -345,7 +347,29 @@ Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(int index) {
 }
 
 void MassSpringSystemSimulator::applyExternalForce(Vec3 force) {
-    // TODO
+    for (auto& p : m_massPoints) {
+        p.m_force += force;
+    }
+}
+
+void MassSpringSystemSimulator::computeForces(std::vector<MassPoint>& massPoints) {
+    for (auto& s : m_springs) {
+        Vec3 d = massPoints[s.m_iMasspoint1].m_position -
+            massPoints[s.m_iMasspoint2].m_position;
+        float dist = sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
+        Vec3 f1 = -m_fStiffness * (dist - s.m_fInitialLength) * (d / dist);
+        Vec3 f2 = -f1;
+
+        massPoints[s.m_iMasspoint1].m_force += f1;
+        massPoints[s.m_iMasspoint2].m_force += f2;
+    }
+}
+
+void MassSpringSystemSimulator::applyDamping(
+    std::vector<MassPoint>& massPoints) {
+    for (auto& p : massPoints) {
+        p.m_force -= m_fDamping * p.m_velocity;
+    }
 }
 
 void MassSpringSystemSimulator::integrate(float timeStep) {
@@ -364,18 +388,14 @@ void MassSpringSystemSimulator::integrate(float timeStep) {
     }
 }
 
-void MassSpringSystemSimulator::applyDamping(
-    std::vector<MassPoint>& massPoints) {
-    for (auto& p : massPoints) {
-        p.m_force -= m_fDamping * p.m_velocity;
-    }
-}
-
 void MassSpringSystemSimulator::integrateEuler(float timeStep) {
     for (auto& p : m_massPoints) {
         if (!p.m_isFixed) {
+            // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
-            p.m_velocity += timeStep * (p.m_force / m_fMass);
+            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
+            p.m_velocity +=
+                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 }
@@ -389,18 +409,18 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
     for (auto& p : massPointsTmp) {
         if (!p.m_isFixed) {
             p.m_position += (0.5f * timeStep) * p.m_velocity;
-            p.m_velocity += (0.5f * timeStep) * (p.m_force / m_fMass);
+            p.m_velocity += (0.5f * timeStep) *
+                ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 
     // update forces of points after integration with half of a timestep (note:
     // more costly as euler, since we need to update the forces here again)
+    // first we have to clear the forces of our tmp array
     for (auto& p : massPointsTmp) {
         p.clearForce();
     }
-    for (auto& s : m_springs) {
-        s.computeForces(massPointsTmp);
-    }
+    computeForces(massPointsTmp);
     applyDamping(massPointsTmp);
 
     // now do the integration for the full timestep
@@ -408,7 +428,8 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
         if (!m_massPoints[i].m_isFixed) {
             m_massPoints[i].m_position += timeStep * massPointsTmp[i].m_velocity;
             m_massPoints[i].m_velocity +=
-                timeStep * (massPointsTmp[i].m_force / m_fMass);
+                timeStep * ((massPointsTmp[i].m_force / m_fMass) +
+                    Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 }
