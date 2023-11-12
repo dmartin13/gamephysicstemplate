@@ -120,8 +120,8 @@ void MassSpringSystemSimulator::createTenSprings()
 		mp2.isFixed = false;
 
 		Spring spring;
-		spring.initialLength = 3.0f;
-		spring.stiffness = 30.0f;
+		spring.initialLength = 0.5f;
+		spring.stiffness = 20.0f;
 
 		massPoints.push_back(mp1);
 		spring.massPoint1 = massPoints.size() - 1;
@@ -166,24 +166,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
-	//// Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
-	//Point2D mouseDiff;
-	//mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
-	//mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
-	//if (mouseDiff.x != 0 || mouseDiff.y != 0)
-	//{
-	//	Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
-	//	worldViewInv = worldViewInv.inverse();
-	//	Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
-	//	Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-	//	// find a proper scale!
-	//	float inputScale = 0.001f;
-	//	inputWorld = inputWorld * inputScale;
-	//	m_vfMovableObjectPos = m_vfMovableObjectFinalPos + inputWorld;
-	//}
-	//else {
-	//	m_vfMovableObjectFinalPos = m_vfMovableObjectPos;
-	//}
+	
 }
 
 void MassSpringSystemSimulator::integratePosition(MassPoint& p, float timeStep, bool isMidstep)
@@ -197,12 +180,23 @@ void MassSpringSystemSimulator::integratePosition(MassPoint& p, float timeStep, 
 			midStepValue = 1.0f;
 
 		Vec3 newPos = p.position + (p.velocity.operator*(timeStep));
-		/*if (newPos.X <= -6.0f)
-			newPos.X = -6.0f;
-		if (newPos.X >= 6.0f)
-			newPos.X = 6.0f;*/
-		if (newPos.Y <= -0.5f)
-			newPos.Y = -0.5f;
+		if (m_iTestCase == 3) // Apply just for the complex case
+		{
+			if (newPos.X < -0.5f)
+				newPos.X = -0.5f;
+			if (newPos.X > 0.5f)
+				newPos.X = 0.5f;
+
+			if (newPos.Z > 0.5f)
+				newPos.Z = 0.5f;
+			if (newPos.Z < -0.5f)
+				newPos.Z = -0.5f;
+
+			if (newPos.Y < -0.5f)
+				newPos.Y = -0.5f;
+			if (newPos.Y > 0.5f)
+				newPos.Y = 0.5f;
+		}
 		p.position = newPos;
 	}
 }
@@ -329,7 +323,32 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			integrateVelocity(massPoint2, accAtMidPosMp2, timeStep);
 		}
 		break;
-	case 3:
+	case 3: // Complext simulation of 10 springs
+		for (int i{ 0 }; i < springs.size(); i++)
+		{
+			// Getting the mass point for a string
+			Spring& spring = springs.at(i);
+			MassPoint& massPoint1 = massPoints.at(spring.massPoint1);
+			MassPoint& massPoint2 = massPoints.at(spring.massPoint2);
+
+			// Calculate the force
+			Vec3 pointDiff = massPoint1.position - massPoint2.position;
+			spring.currentLength = sqrtf(powf(pointDiff.X, 2) + powf(pointDiff.Y, 2) + powf(pointDiff.Z, 2));
+			Vec3 forceOnMp1 = (-spring.stiffness) * (spring.currentLength - spring.initialLength) * (pointDiff.operator/(spring.currentLength));
+			Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
+
+			// Calculate accelerations
+			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (0.0f * massPoint1.velocity) + Vec3(0, -9.8, 0);
+			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (0.0f * massPoint2.velocity) + Vec3(0, -9.8, 0);
+
+			// Calculate velocities (Velocity is calculated first, because Leap-Frog)
+			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
+			integrateVelocity(massPoint2, accAtOldPosMp2, timeStep);
+
+			// Calculate positions
+			integratePosition(massPoint1, timeStep);
+			integratePosition(massPoint2, timeStep);
+		}
 		break;
 	case 4: // Leap-Frog Method
 		for (int i{ 0 }; i < springs.size(); i++)
