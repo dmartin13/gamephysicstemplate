@@ -41,7 +41,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 
 const char* MassSpringSystemSimulator::getTestCasesStr()
 {
-	return "Euler,Midpoint,Leap Frog";
+	return "1 Step,Euler,Midpoint,Leap Frog";
 }
 
 void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -52,6 +52,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	case 0:break;
 	case 1:break;
 	case 2:break;
+	case 3: break;
 	default:break;
 	}
 }
@@ -69,24 +70,50 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 	switch (m_iTestCase)
 	{
 	case 0:
-		for (int i{ 0 }; i < massPoints.size(); i++)
+		//break;
+	case 1:
+		for (int i{ 0 }; i < springs.size(); i++)
 		{
+			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
+			Vec3 massPoint2Pos = massPoints.at(springs.at(i).massPoint2).position;
+
 			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-			DUC->drawSphere(massPoints.at(i).position, Vec3(0.05f));
-		}
-		break;
-	case 1: 
-		for (int i{ 0 }; i < massPoints.size(); i++)
-		{
-			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-			DUC->drawSphere(massPoints.at(i).position, Vec3(0.05f));
+			DUC->drawSphere(massPoint1Pos, Vec3(0.05f));
+			DUC->drawSphere(massPoint2Pos, Vec3(0.05f));
+
+			DUC->beginLine();
+			DUC->drawLine(massPoint1Pos, Vec3(1), massPoint2Pos, Vec3(1));
+			DUC->endLine();
 		}
 		break;
 	case 2: 
-		for (int i{ 0 }; i < massPoints.size(); i++)
+		for (int i{ 0 }; i < springs.size(); i++)
 		{
+			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
+			Vec3 massPoint2Pos = massPoints.at(springs.at(i).massPoint2).position;
+
 			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-			DUC->drawSphere(massPoints.at(i).position, Vec3(0.05f));
+			DUC->drawSphere(massPoint1Pos, Vec3(0.05f));
+			DUC->drawSphere(massPoint2Pos, Vec3(0.05f));
+
+			DUC->beginLine();
+			DUC->drawLine(massPoint1Pos, Vec3(1), massPoint2Pos, Vec3(1));
+			DUC->endLine();
+		}
+		break;
+	case 3: 
+		for (int i{ 0 }; i < springs.size(); i++)
+		{
+			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
+			Vec3 massPoint2Pos = massPoints.at(springs.at(i).massPoint2).position;
+
+			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
+			DUC->drawSphere(massPoint1Pos, Vec3(0.05f));
+			DUC->drawSphere(massPoint2Pos, Vec3(0.05f));
+
+			DUC->beginLine();
+			DUC->drawLine(massPoint1Pos, Vec3(1), massPoint2Pos, Vec3(1));
+			DUC->endLine();
 		}
 		break;
 	defualt:
@@ -100,6 +127,9 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	switch (m_iTestCase)
 	{
 	case 0:
+		cout << "1 Step ! \n";
+		break;
+	case 1:
 		cout << "Euler !\n";
 		// Reset position & velocity
 		for (int i{ 0 }; i < massPoints.size(); i++)
@@ -108,7 +138,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 			massPoints.at(i).velocity = massPoints.at(i).initVel;
 		}
 		break;
-	case 1:
+	case 2:
 		cout << "Midpoint !\n";
 		for (int i{ 0 }; i < massPoints.size(); i++)
 		{
@@ -116,7 +146,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 			massPoints.at(i).velocity = massPoints.at(i).initVel;
 		}
 		break;
-	case 2:
+	case 3:
 		cout << "Leap Frog !\n";
 		for (int i{ 0 }; i < massPoints.size(); i++)
 		{
@@ -178,7 +208,9 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	// update current setup for each frame
 	switch (m_iTestCase)
 	{// handling different cases
-	case 0: // Euler Method
+	case 0: // 1 Step
+		break;
+	case 1: // Euler Method
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			// Getting the mass point for a string
@@ -213,7 +245,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			std::cout << "Mp2 Vel: " << massPoint2.velocity << std::endl << std::endl;*/
 		}
 		break;
-	case 1: // Midpoint Method
+	case 2: // Midpoint Method
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			// Getting the mass point for a string
@@ -262,7 +294,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			massPoint2.velocity = massPoint2.velocity + (accAtMidPosMp2.operator*(timeStep));
 		}
 		break;
-	case 2: // Leap-Frog Method
+	case 3: // Leap-Frog Method
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			// Getting the mass point for a string
