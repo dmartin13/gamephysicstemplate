@@ -106,7 +106,42 @@ void MassSpringSystemSimulator::createTenSprings()
 
 	massPoints.clear();
 	springs.clear();
-	for (int i{ 0 }; i < 10; i++)
+	const int rows = 2;
+	const int cols = 2;
+	for (int i = 0; i < rows; ++i)
+	{
+		for (int j = 0; j < cols; ++j)
+		{
+			MassPoint mp;
+			mp.position = Vec3(randPos(eng), randPos(eng), 0);
+			mp.velocity = Vec3(randVel(eng), randVel(eng), 0);
+			mp.mass = 3.0f;
+			mp.isFixed = false;
+
+			massPoints.push_back(mp);
+
+			if (j < cols - 1)
+			{
+				Spring springH;
+				springH.initialLength = 0.5f;
+				springH.stiffness = 20.0f;
+				springH.massPoint1 = i * cols + j;
+				springH.massPoint2 = i * cols + j + 1;
+				springs.push_back(springH);
+			}
+
+			if (i < rows - 1)
+			{
+				Spring springV;
+				springV.initialLength = 0.5f;
+				springV.stiffness = 20.0f;
+				springV.massPoint1 = i * cols + j;
+				springV.massPoint2 = (i + 1) * cols + j;
+				springs.push_back(springV);
+			}
+		}
+	}
+	/*for (int i{ 0 }; i < 10; i++)
 	{
 		MassPoint mp1, mp2;
 		mp1.position = Vec3(randPos(eng), randPos(eng), randPos(eng));
@@ -140,7 +175,7 @@ void MassSpringSystemSimulator::createTenSprings()
 		spring.massPoint2 = i + 2;
 
 		springs.push_back(spring);
-	}
+	}*/
 }
 
 bool firstTimeOneStep = true;
