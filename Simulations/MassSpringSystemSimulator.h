@@ -57,6 +57,7 @@ public:
 
 	void integratePosition(MassPoint& p, float timeStep, bool isMidstep = false);
 	void createTwoMassPoints();
+	void createTenSprings();
 
 
 private:

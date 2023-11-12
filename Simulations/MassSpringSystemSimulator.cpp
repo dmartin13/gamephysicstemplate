@@ -14,7 +14,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 
 const char* MassSpringSystemSimulator::getTestCasesStr()
 {
-	return "1 Step,Euler,Midpoint,Leap Frog";
+	return "Demo 1: Step,Demo 2: Euler,Demo 3: Midpoint,Demo 4: Complext,Demo 5: Leap Frog";
 }
 
 void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -26,6 +26,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	case 1:break;
 	case 2:break;
 	case 3: break;
+	case 4: break;
 	default:break;
 	}
 }
@@ -48,7 +49,9 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 		//break;
 	case 2: 
 		//break;
-	case 3: 
+	case 3:
+		//break;
+	case 4: 
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
@@ -99,6 +102,11 @@ void MassSpringSystemSimulator::createTwoMassPoints()
 	springs.push_back(spring);
 }
 
+void MassSpringSystemSimulator::createTenSprings()
+{
+	
+}
+
 bool firstTimeOneStep = true;
 void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 {
@@ -106,22 +114,23 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	switch (m_iTestCase)
 	{
 	case 0:
-		cout << "1 Step ! \n";
+		cout << "Demo 1: Step ! \n";
 		createTwoMassPoints();
 		firstTimeOneStep = true;
 		break;
 	case 1:
-		cout << "Euler !\n";
+		cout << "Demo 2: Euler !\n";
 		createTwoMassPoints();
 		break;
 	case 2:
-		cout << "Midpoint !\n";
-		for (int i{ 0 }; i < massPoints.size(); i++)
+		cout << "Demo 3: Midpoint !\n";
 		createTwoMassPoints();
-
 		break;
 	case 3:
-		cout << "Leap Frog !\n";
+		cout << "Demo 4: Complex";
+		break;
+	case 4:
+		cout << "Demo 5: Leap Frog !\n";
 		createTwoMassPoints();
 		break;
 	default:
@@ -290,7 +299,9 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			massPoint2.velocity = massPoint2.velocity + (accAtMidPosMp2.operator*(timeStep));
 		}
 		break;
-	case 3: // Leap-Frog Method
+	case 3:
+		break;
+	case 4: // Leap-Frog Method
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			// Getting the mass point for a string
