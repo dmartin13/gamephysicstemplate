@@ -37,10 +37,27 @@ public:
 	Vec3 getVelocityOfMassPoint(int index);
 	void applyExternalForce(Vec3 force);
 	
+	
 	// Do Not Change
 	void setIntegrator(int integrator) {
 		m_iIntegrator = integrator;
 	}
+
+	// New Additions
+	struct Spring {
+		int massPoint1, massPoint2;	// Indices of mass points
+		float stiffness, initialLength, currentLength;
+	};
+	struct MassPoint {
+		Vec3 position, initPos;
+		Vec3 velocity, initVel;
+		bool isFixed = false;
+		float mass, damping;
+	};
+
+	void integratePosition(MassPoint& p, float timeStep, bool isMidstep = false);
+	void integrateVelocity(MassPoint& p, float timeStep);
+
 
 private:
 	// Data Attributes
@@ -54,5 +71,9 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
+
+	// New Additions
+	std::vector<MassPoint> massPoints;
+	std::vector<Spring> springs;
 };
 #endif
