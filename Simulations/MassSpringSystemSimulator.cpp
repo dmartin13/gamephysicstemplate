@@ -194,6 +194,16 @@ void MassSpringSystemSimulator::setupDemoThree() {
 
 void MassSpringSystemSimulator::setupDemoFour() {
 
+    if (!m_valuesForComplexDemoSet) {
+        setMass(10.f);
+        setStiffness(200.f);
+        setDampingFactor(0.4f);
+        useGroundCollision = true;
+        setGravity(2.f);
+        setBounceFactor(0.5f);
+        m_valuesForComplexDemoSet = true;
+    }
+
     // Object 1 (arm with box)
     int p00 = addMassPoint(Vec3(-4.f, 2.f, 0.f), Vec3(0.f, 0.f, 0.f), true);
     int p01 = addMassPoint(Vec3(-5.f, 4.f, 2.f), Vec3(0.f, -0.1f, 0.f), false);
@@ -209,37 +219,127 @@ void MassSpringSystemSimulator::setupDemoFour() {
     addSpring(p04, p02, 1.f);
 
     // Object 2 (star)
-    int p10 = addMassPoint(Vec3(0.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    int p11 = addMassPoint(Vec3(0.f, 6.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    int p12 = addMassPoint(Vec3(-sqrt(2.f), 4.f + sqrt(2.f), 0.f),
-        Vec3(0.f, 0.f, 0.f), false);
-    int p13 = addMassPoint(Vec3(-2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    int p14 = addMassPoint(Vec3(-sqrt(2.f), 4.f - sqrt(2.f), 0.f),
-        Vec3(0.f, 0.f, 0.f), false);
-    int p15 = addMassPoint(Vec3(0.f, 2.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    int p16 = addMassPoint(Vec3(sqrt(2.f), 4.f - sqrt(2.f), 0.f),
-        Vec3(0.f, 0.f, 0.f), false);
-    int p17 = addMassPoint(Vec3(2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    int p18 = addMassPoint(Vec3(sqrt(2.f), 4.f + sqrt(2.f), 0.f),
-        Vec3(0.f, 0.f, 0.f), false);
-    addSpring(p10, p11, 1.f);
-    addSpring(p10, p12, 1.f);
-    addSpring(p10, p13, 1.f);
-    addSpring(p10, p14, 1.f);
-    addSpring(p10, p15, 1.f);
-    addSpring(p10, p16, 1.f);
-    addSpring(p10, p17, 1.f);
-    addSpring(p10, p18, 1.f);
-    addSpring(p11, p12, 1.f);
-    addSpring(p12, p13, 1.f);
-    addSpring(p13, p14, 1.f);
-    addSpring(p14, p15, 1.f);
-    addSpring(p15, p16, 1.f);
-    addSpring(p16, p17, 1.f);
-    addSpring(p17, p18, 1.f);
-    addSpring(p18, p11, 1.f);
+    // int p10 = addMassPoint(Vec3(0.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    // int p11 = addMassPoint(Vec3(0.f, 6.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    // int p12 = addMassPoint(Vec3(-sqrt(2.f), 4.f + sqrt(2.f), 0.f),
+    //     Vec3(0.f, 0.f, 0.f), false);
+    // int p13 = addMassPoint(Vec3(-2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    // int p14 = addMassPoint(Vec3(-sqrt(2.f), 4.f - sqrt(2.f), 0.f),
+    //     Vec3(0.f, 0.f, 0.f), false);
+    // int p15 = addMassPoint(Vec3(0.f, 2.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    // int p16 = addMassPoint(Vec3(sqrt(2.f), 4.f - sqrt(2.f), 0.f),
+    //     Vec3(0.f, 0.f, 0.f), false);
+    // int p17 = addMassPoint(Vec3(2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    // int p18 = addMassPoint(Vec3(sqrt(2.f), 4.f + sqrt(2.f), 0.f),
+    //     Vec3(0.f, 0.f, 0.f), false);
+    // addSpring(p10, p11,
+    //     sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //         m_massPoints[p11].m_position)));
+    // addSpring(p10, p12, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p12].m_position)));
+    // addSpring(p10, p13, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p13].m_position)));
+    // addSpring(p10, p14, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p14].m_position)));
+    // addSpring(p10, p15, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p15].m_position)));
+    // addSpring(p10, p16, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p16].m_position)));
+    // addSpring(p10, p17, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p17].m_position)));
+    // addSpring(p10, p18, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
+    //     m_massPoints[p18].m_position)));
+    // addSpring(p11, p12, sqrt(m_massPoints[p11].m_position.squaredDistanceTo(
+    //     m_massPoints[p12].m_position)));
+    // addSpring(p12, p13, sqrt(m_massPoints[p12].m_position.squaredDistanceTo(
+    //     m_massPoints[p13].m_position)));
+    // addSpring(p13, p14, sqrt(m_massPoints[p13].m_position.squaredDistanceTo(
+    //     m_massPoints[p14].m_position)));
+    // addSpring(p14, p15, sqrt(m_massPoints[p14].m_position.squaredDistanceTo(
+    //     m_massPoints[p15].m_position)));
+    // addSpring(p15, p16, sqrt(m_massPoints[p15].m_position.squaredDistanceTo(
+    //     m_massPoints[p16].m_position)));
+    // addSpring(p16, p17, sqrt(m_massPoints[p16].m_position.squaredDistanceTo(
+    //     m_massPoints[p17].m_position)));
+    // addSpring(p17, p18, sqrt(m_massPoints[p17].m_position.squaredDistanceTo(
+    //     m_massPoints[p18].m_position)));
+    // addSpring(p18, p11, sqrt(m_massPoints[p18].m_position.squaredDistanceTo(
+    //     m_massPoints[p11].m_position)));
 
     // Object 3 TBD
+    int p20 = addMassPoint(Vec3(-1.f, 1.f, -1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p21 = addMassPoint(Vec3(-1.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    int p22 = addMassPoint(Vec3(-1.f, 1.f, 1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p23 = addMassPoint(Vec3(0.f, 1.f, -1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p24 = addMassPoint(Vec3(0.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    int p25 = addMassPoint(Vec3(0.f, 1.f, 1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p26 = addMassPoint(Vec3(1.f, 1.f, -1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p27 = addMassPoint(Vec3(1.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+    int p28 = addMassPoint(Vec3(1.f, 1.f, 1.f), Vec3(0.f, 0.f, 0.f), false);
+    int p29 = addMassPoint(Vec3(-0.5f, 2.f, -0.5f), Vec3(0.f, 0.f, 0.f), false);
+    int p210 = addMassPoint(Vec3(-0.5f, 2.f, 0.5f), Vec3(0.f, 0.f, 0.f), false);
+    int p211 = addMassPoint(Vec3(0.5f, 2.f, -0.5f), Vec3(0.f, 0.f, 0.f), false);
+    int p212 = addMassPoint(Vec3(0.5f, 2.f, 0.5f), Vec3(0.f, 0.f, 0.f), false);
+    int p213 = addMassPoint(Vec3(0.f, 3.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
+
+    addSpring(p20, p21, 1.f);
+    addSpring(p20, p23, 1.f);
+    addSpring(p20, p24, 1.f);
+    addSpring(p20, p29, 1.f);
+
+    addSpring(p21, p22, 1.f);
+    addSpring(p21, p23, 1.f);
+    addSpring(p21, p24, 1.f);
+    addSpring(p21, p25, 1.f);
+    addSpring(p21, p29, 1.f);
+    addSpring(p21, p210, 1.f);
+
+    addSpring(p22, p25, 1.f);
+    addSpring(p22, p24, 1.f);
+    addSpring(p22, p210, 1.f);
+
+    addSpring(p23, p24, 1.f);
+    addSpring(p23, p26, 1.f);
+    addSpring(p23, p29, 1.f);
+    addSpring(p23, p211, 1.f);
+    addSpring(p23, p27, 1.f);
+
+    addSpring(p25, p24, 1.f);
+    addSpring(p25, p28, 1.f);
+    addSpring(p25, p27, 1.f);
+    addSpring(p25, p210, 1.f);
+    addSpring(p25, p212, 1.f);
+
+    addSpring(p26, p24, 1.f);
+    addSpring(p26, p27, 1.f);
+    addSpring(p26, p211, 1.f);
+
+    addSpring(p27, p24, 1.f);
+    addSpring(p27, p28, 1.f);
+    addSpring(p27, p211, 1.f);
+    addSpring(p27, p212, 1.f);
+
+    addSpring(p28, p24, 1.f);
+    addSpring(p28, p212, 1.f);
+
+    addSpring(p29, p210, 1.f);
+    addSpring(p29, p211, 1.f);
+    addSpring(p210, p212, 1.f);
+    addSpring(p211, p212, 1.f);
+    addSpring(p210, p211, 1.f);
+    addSpring(p29, p212, 1.f);
+
+    addSpring(p213, p29, 1.f);
+    addSpring(p213, p210, 1.f);
+    addSpring(p213, p211, 1.f);
+    addSpring(p213, p212, 1.f);
+
+    addSpring(p24, p29, 1.f);
+    addSpring(p24, p210, 1.f);
+    addSpring(p24, p211, 1.f);
+    addSpring(p24, p212, 1.f);
+
+    addSpring(p24, p213, 2.f);
 }
 
 void MassSpringSystemSimulator::setupDemoFive() {
@@ -247,7 +347,27 @@ void MassSpringSystemSimulator::setupDemoFive() {
     setupDemoFour();
 }
 
-void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {}
+void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {
+    // Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view
+    // plane)
+    Point2D mouseDiff;
+    mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+    mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+    if (mouseDiff.x != 0 || mouseDiff.y != 0) {
+        Mat4 worldViewInv =
+            Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+        worldViewInv = worldViewInv.inverse();
+        Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+        Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+        // find a proper scale!
+        float inputScale = 0.001f;
+        inputWorld = inputWorld * inputScale;
+        m_massPoints[0].m_position = m_vfMovableObjectFinalPos + inputWorld;
+    }
+    else {
+        m_vfMovableObjectFinalPos = m_massPoints[0].m_position;
+    }
+}
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
     // first check if we have overwritten the timestep. If so, the use the

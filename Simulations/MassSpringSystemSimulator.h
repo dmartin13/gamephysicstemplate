@@ -86,6 +86,7 @@ public:
 
 private:
     // Data Attributes
+    Vec3  m_vfMovableObjectFinalPos;
     float m_fMass;
     float m_fStiffness;
     float m_fDamping;
@@ -95,6 +96,7 @@ private:
     bool useGroundCollision{ false };
     float m_fGravity{ 0.0f };
     float m_fBounceFactor{ 0.0f };
+    bool m_valuesForComplexDemoSet{ false };
 
     // Mass Points
     std::vector<MassPoint> m_massPoints;
