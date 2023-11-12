@@ -154,20 +154,23 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::integratePosition(MassPoint& p, float timeStep, bool isMidstep)
 {
-	int midStepValue = 1.0f;
-	if (isMidstep)
-		midStepValue = 0.5f;
-	else
-		midStepValue = 1.0f;
+	if (!p.isFixed)
+	{
+		int midStepValue = 1.0f;
+		if (isMidstep)
+			midStepValue = 0.5f;
+		else
+			midStepValue = 1.0f;
 
-	Vec3 newPos = p.position + (p.velocity.operator*(timeStep));
-	/*if (newPos.X <= -6.0f)
-		newPos.X = -6.0f;
-	if (newPos.X >= 6.0f)
-		newPos.X = 6.0f;*/
-	if (newPos.Y <= -0.5f)
-		newPos.Y = -0.5f;	
-	p.position = newPos;
+		Vec3 newPos = p.position + (p.velocity.operator*(timeStep));
+		/*if (newPos.X <= -6.0f)
+			newPos.X = -6.0f;
+		if (newPos.X >= 6.0f)
+			newPos.X = 6.0f;*/
+		if (newPos.Y <= -0.5f)
+			newPos.Y = -0.5f;
+		p.position = newPos;
+	}
 }
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
