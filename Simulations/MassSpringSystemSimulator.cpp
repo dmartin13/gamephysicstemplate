@@ -129,6 +129,18 @@ void MassSpringSystemSimulator::createTenSprings()
 		spring.massPoint2 = massPoints.size() - 1;
 		springs.push_back(spring);
 	}
+	
+	for (int i{ 0 }; i < springs.size()-2; i += 2)
+	{
+		Spring spring;
+		spring.initialLength = 0.5f;
+		spring.stiffness = 20.0f;
+
+		spring.massPoint1 = i;
+		spring.massPoint2 = i + 2;
+
+		springs.push_back(spring);
+	}
 }
 
 bool firstTimeOneStep = true;
@@ -338,8 +350,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
 
 			// Calculate accelerations
-			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (0.0f * massPoint1.velocity) + Vec3(0, -9.8, 0);
-			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (0.0f * massPoint2.velocity) + Vec3(0, -9.8, 0);
+			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (0.0f * massPoint1.velocity) + Vec3(0, 0, 0);
+			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (0.0f * massPoint2.velocity) + Vec3(0, 0, 0);
 
 			// Calculate velocities (Velocity is calculated first, because Leap-Frog)
 			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
