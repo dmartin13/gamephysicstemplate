@@ -202,6 +202,7 @@ void MassSpringSystemSimulator::setupDemoFour() {
         setGravity(2.f);
         setBounceFactor(0.5f);
         m_valuesForComplexDemoSet = true;
+        m_iIntegrator = EULER;
     }
 
     // Object 1 (arm with box)
@@ -282,67 +283,162 @@ void MassSpringSystemSimulator::setupDemoFour() {
     int p212 = addMassPoint(Vec3(0.5f, 2.f, 0.5f), Vec3(0.f, 0.f, 0.f), false);
     int p213 = addMassPoint(Vec3(0.f, 3.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
 
-    addSpring(p20, p21, 1.f);
-    addSpring(p20, p23, 1.f);
-    addSpring(p20, p24, 1.f);
-    addSpring(p20, p29, 1.f);
+    addSpring(p20, p21,
+        sqrt(m_massPoints[p20].m_position.squaredDistanceTo(
+            m_massPoints[p21].m_position)));
+    addSpring(p20, p23,
+        sqrt(m_massPoints[p20].m_position.squaredDistanceTo(
+            m_massPoints[p23].m_position)));
+    addSpring(p20, p24,
+        sqrt(m_massPoints[p20].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p20, p29,
+        sqrt(m_massPoints[p20].m_position.squaredDistanceTo(
+            m_massPoints[p29].m_position)));
 
-    addSpring(p21, p22, 1.f);
-    addSpring(p21, p23, 1.f);
-    addSpring(p21, p24, 1.f);
-    addSpring(p21, p25, 1.f);
-    addSpring(p21, p29, 1.f);
-    addSpring(p21, p210, 1.f);
+    addSpring(p21, p22,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p22].m_position)));
+    addSpring(p21, p23,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p23].m_position)));
+    addSpring(p21, p24,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p21, p25,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p25].m_position)));
+    addSpring(p21, p29,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p29].m_position)));
+    addSpring(p21, p210,
+        sqrt(m_massPoints[p21].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
 
-    addSpring(p22, p25, 1.f);
-    addSpring(p22, p24, 1.f);
-    addSpring(p22, p210, 1.f);
+    addSpring(p22, p25,
+        sqrt(m_massPoints[p22].m_position.squaredDistanceTo(
+            m_massPoints[p25].m_position)));
+    addSpring(p22, p24,
+        sqrt(m_massPoints[p22].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p22, p210,
+        sqrt(m_massPoints[p22].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
 
-    addSpring(p23, p24, 1.f);
-    addSpring(p23, p26, 1.f);
-    addSpring(p23, p29, 1.f);
-    addSpring(p23, p211, 1.f);
-    addSpring(p23, p27, 1.f);
+    addSpring(p23, p24,
+        sqrt(m_massPoints[p23].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p23, p26,
+        sqrt(m_massPoints[p23].m_position.squaredDistanceTo(
+            m_massPoints[p26].m_position)));
+    addSpring(p23, p29,
+        sqrt(m_massPoints[p23].m_position.squaredDistanceTo(
+            m_massPoints[p29].m_position)));
+    addSpring(p23, p211,
+        sqrt(m_massPoints[p23].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p23, p27,
+        sqrt(m_massPoints[p23].m_position.squaredDistanceTo(
+            m_massPoints[p27].m_position)));
 
-    addSpring(p25, p24, 1.f);
-    addSpring(p25, p28, 1.f);
-    addSpring(p25, p27, 1.f);
-    addSpring(p25, p210, 1.f);
-    addSpring(p25, p212, 1.f);
+    addSpring(p25, p24,
+        sqrt(m_massPoints[p25].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p25, p28,
+        sqrt(m_massPoints[p25].m_position.squaredDistanceTo(
+            m_massPoints[p28].m_position)));
+    addSpring(p25, p27,
+        sqrt(m_massPoints[p25].m_position.squaredDistanceTo(
+            m_massPoints[p27].m_position)));
+    addSpring(p25, p210,
+        sqrt(m_massPoints[p25].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
+    addSpring(p25, p212,
+        sqrt(m_massPoints[p25].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p26, p24, 1.f);
-    addSpring(p26, p27, 1.f);
-    addSpring(p26, p211, 1.f);
+    addSpring(p26, p24,
+        sqrt(m_massPoints[p26].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p26, p27,
+        sqrt(m_massPoints[p26].m_position.squaredDistanceTo(
+            m_massPoints[p27].m_position)));
+    addSpring(p26, p211,
+        sqrt(m_massPoints[p26].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
 
-    addSpring(p27, p24, 1.f);
-    addSpring(p27, p28, 1.f);
-    addSpring(p27, p211, 1.f);
-    addSpring(p27, p212, 1.f);
+    addSpring(p27, p24,
+        sqrt(m_massPoints[p27].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p27, p28,
+        sqrt(m_massPoints[p27].m_position.squaredDistanceTo(
+            m_massPoints[p28].m_position)));
+    addSpring(p27, p211,
+        sqrt(m_massPoints[p27].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p27, p212,
+        sqrt(m_massPoints[p27].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p28, p24, 1.f);
-    addSpring(p28, p212, 1.f);
+    addSpring(p28, p24,
+        sqrt(m_massPoints[p28].m_position.squaredDistanceTo(
+            m_massPoints[p24].m_position)));
+    addSpring(p28, p212,
+        sqrt(m_massPoints[p28].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p29, p210, 1.f);
-    addSpring(p29, p211, 1.f);
-    addSpring(p210, p212, 1.f);
-    addSpring(p211, p212, 1.f);
-    addSpring(p210, p211, 1.f);
-    addSpring(p29, p212, 1.f);
+    addSpring(p29, p210,
+        sqrt(m_massPoints[p29].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
+    addSpring(p29, p211,
+        sqrt(m_massPoints[p29].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p210, p212,
+        sqrt(m_massPoints[p210].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
+    addSpring(p211, p212,
+        sqrt(m_massPoints[p211].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
+    addSpring(p210, p211,
+        sqrt(m_massPoints[p210].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p29, p212,
+        sqrt(m_massPoints[p29].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p213, p29, 1.f);
-    addSpring(p213, p210, 1.f);
-    addSpring(p213, p211, 1.f);
-    addSpring(p213, p212, 1.f);
+    addSpring(p213, p29,
+        sqrt(m_massPoints[p213].m_position.squaredDistanceTo(
+            m_massPoints[p29].m_position)));
+    addSpring(p213, p210,
+        sqrt(m_massPoints[p213].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
+    addSpring(p213, p211,
+        sqrt(m_massPoints[p213].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p213, p212,
+        sqrt(m_massPoints[p213].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p24, p29, 1.f);
-    addSpring(p24, p210, 1.f);
-    addSpring(p24, p211, 1.f);
-    addSpring(p24, p212, 1.f);
+    addSpring(p24, p29,
+        sqrt(m_massPoints[p24].m_position.squaredDistanceTo(
+            m_massPoints[p29].m_position)));
+    addSpring(p24, p210,
+        sqrt(m_massPoints[p24].m_position.squaredDistanceTo(
+            m_massPoints[p210].m_position)));
+    addSpring(p24, p211,
+        sqrt(m_massPoints[p24].m_position.squaredDistanceTo(
+            m_massPoints[p211].m_position)));
+    addSpring(p24, p212,
+        sqrt(m_massPoints[p24].m_position.squaredDistanceTo(
+            m_massPoints[p212].m_position)));
 
-    addSpring(p24, p213, 2.f);
+    addSpring(p24, p213,
+        sqrt(m_massPoints[p24].m_position.squaredDistanceTo(
+            m_massPoints[p213].m_position)));
 }
 
 void MassSpringSystemSimulator::setupDemoFive() {
+    m_valuesForComplexDemoSet = false;
     m_iIntegrator = LEAPFROG;
     setupDemoFour();
 }
@@ -350,23 +446,29 @@ void MassSpringSystemSimulator::setupDemoFive() {
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {
     // Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view
     // plane)
-    Point2D mouseDiff;
-    mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
-    mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
-    if (mouseDiff.x != 0 || mouseDiff.y != 0) {
-        Mat4 worldViewInv =
-            Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
-        worldViewInv = worldViewInv.inverse();
-        Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
-        Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-        // find a proper scale!
-        float inputScale = 0.001f;
-        inputWorld = inputWorld * inputScale;
-        m_massPoints[0].m_position = m_vfMovableObjectFinalPos + inputWorld;
+    if (m_iTestCase == 3 || m_iTestCase == 4) {
+        // apply mouse input to top point of the pyramid
+        Point2D mouseDiff;
+        mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+        mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+        if (mouseDiff.x != 0 || mouseDiff.y != 0) {
+            Mat4 worldViewInv =
+                Mat4(DUC->g_camera.GetWorldMatrix() * DUC->g_camera.GetViewMatrix());
+            worldViewInv = worldViewInv.inverse();
+            Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+            Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+            // find a proper scale!
+            float inputScale = 0.001f;
+            inputWorld = inputWorld * inputScale;
+            m_massPoints[m_massPoints.size() - 1].m_position =
+                m_vfMovableObjectFinalPos + inputWorld;
+        }
+        else {
+            m_vfMovableObjectFinalPos =
+                m_massPoints[m_massPoints.size() - 1].m_position;
+        }
     }
-    else {
-        m_vfMovableObjectFinalPos = m_massPoints[0].m_position;
-    }
+
 }
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
