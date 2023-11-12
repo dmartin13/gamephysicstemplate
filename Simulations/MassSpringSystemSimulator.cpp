@@ -207,6 +207,11 @@ void MassSpringSystemSimulator::integratePosition(MassPoint& p, float timeStep, 
 	}
 }
 
+void MassSpringSystemSimulator::integrateVelocity(MassPoint& p, Vec3 acc, float timeStep)
+{
+	p.velocity = p.velocity + (acc.operator*(timeStep));
+}
+
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
 	// update current setup for each frame
@@ -237,8 +242,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 				integratePosition(massPoint2, timeStep);
 
 				// Calculate velocities using Euler
-				massPoint1.velocity = massPoint1.velocity + (accAtOldPosMp1.operator*(timeStep));
-				massPoint2.velocity = massPoint2.velocity + (accAtOldPosMp2.operator*(timeStep));
+				integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
+				integrateVelocity(massPoint2, accAtOldPosMp2, timeStep);
 
 				std::cout << "Mp1 Pos: " << massPoint1.position << std::endl;
 				std::cout << "Mp1 Vel: " << massPoint1.velocity << std::endl << std::endl;
@@ -271,8 +276,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			integratePosition(massPoint2, timeStep);
 
 			// Calculate velocities using Euler
-			massPoint1.velocity = massPoint1.velocity + (accAtOldPosMp1.operator*(timeStep));
-			massPoint2.velocity = massPoint2.velocity + (accAtOldPosMp2.operator*(timeStep));
+			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
+			integrateVelocity(massPoint2, accAtOldPosMp2, timeStep);
 		}
 		break;
 	case 2: // Midpoint Method
@@ -320,8 +325,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			integratePosition(massPoint2, timeStep);
 
 			// Calculate Final Velocities
-			massPoint1.velocity = massPoint1.velocity + (accAtMidPosMp1.operator*(timeStep));
-			massPoint2.velocity = massPoint2.velocity + (accAtMidPosMp2.operator*(timeStep));
+			integrateVelocity(massPoint1, accAtMidPosMp1, timeStep);
+			integrateVelocity(massPoint2, accAtMidPosMp2, timeStep);
 		}
 		break;
 	case 3:
