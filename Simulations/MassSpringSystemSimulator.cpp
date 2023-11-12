@@ -14,7 +14,7 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 
 const char* MassSpringSystemSimulator::getTestCasesStr()
 {
-	return "Demo 1: Step,Demo 2: Euler,Demo 3: Midpoint,Demo 4: Complext,Demo 5: Leap Frog";
+	return "Demo 1: Step,Demo 2: Euler,Demo 3: Midpoint,Demo 4: Complex,Demo 5: Leap Frog";
 }
 
 void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -75,16 +75,12 @@ void MassSpringSystemSimulator::createTwoMassPoints()
 {
 	MassPoint mp1, mp2;
 	mp1.position = Vec3(0, 0, 0);
-	mp1.initPos = mp1.position;
 	mp1.velocity = Vec3(-1, 0, 0);
-	mp1.initVel = mp1.velocity;
 	mp1.mass = 10.0f;
 	mp1.isFixed = false;
 
 	mp2.position = Vec3(0, 2, 0);
-	mp2.initPos = mp2.position;
 	mp2.velocity = Vec3(1, 0, 0);
-	mp2.initVel = mp2.velocity;
 	mp2.mass = 10.0f;
 	mp2.isFixed = false;
 
@@ -104,7 +100,35 @@ void MassSpringSystemSimulator::createTwoMassPoints()
 
 void MassSpringSystemSimulator::createTenSprings()
 {
-	
+	std::mt19937 eng;
+	std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+	std::uniform_real_distribution<float> randVel(-0.5f, 0.5f);
+
+	massPoints.clear();
+	springs.clear();
+	for (int i{ 0 }; i < 10; i++)
+	{
+		MassPoint mp1, mp2;
+		mp1.position = Vec3(randPos(eng), randPos(eng), randPos(eng));
+		mp1.velocity = Vec3(randVel(eng), randVel(eng), randVel(eng));
+		mp1.mass = 3.0f;
+		mp1.isFixed = false;
+
+		mp2.position = Vec3(randPos(eng), randPos(eng), randPos(eng));
+		mp2.velocity = Vec3(randVel(eng), randVel(eng), randVel(eng));
+		mp2.mass = 3.0f;
+		mp2.isFixed = false;
+
+		Spring spring;
+		spring.initialLength = 3.0f;
+		spring.stiffness = 30.0f;
+
+		massPoints.push_back(mp1);
+		spring.massPoint1 = massPoints.size() - 1;
+		massPoints.push_back(mp2);
+		spring.massPoint2 = massPoints.size() - 1;
+		springs.push_back(spring);
+	}
 }
 
 bool firstTimeOneStep = true;
@@ -128,6 +152,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 		break;
 	case 3:
 		cout << "Demo 4: Complex";
+		createTenSprings();
 		break;
 	case 4:
 		cout << "Demo 5: Leap Frog !\n";

@@ -49,8 +49,8 @@ public:
 		float stiffness, initialLength, currentLength;
 	};
 	struct MassPoint {
-		Vec3 position, initPos;
-		Vec3 velocity, initVel;
+		Vec3 position;
+		Vec3 velocity;
 		bool isFixed = false;
 		float mass, damping;
 	};
