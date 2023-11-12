@@ -79,6 +79,7 @@ public:
     void setupDemoTwo();
     void setupDemoThree();
     void setupDemoFour();
+    void setupDemoFive();
 
     // Do Not Change
     void setIntegrator(int integrator) { m_iIntegrator = integrator; }

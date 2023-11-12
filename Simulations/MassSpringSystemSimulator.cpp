@@ -43,21 +43,20 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     case 3:
         TwAddVarRW(DUC->g_pTweakBar, "Integrator", TW_TYPE_INTEGRATOR,
             &m_iIntegrator, "");
+    case 4:
+    default:
+
         TwAddVarRW(DUC->g_pTweakBar, "Ground Collision", TW_TYPE_BOOLCPP,
             &useGroundCollision, "");
         TwAddVarRW(DUC->g_pTweakBar, "Bounce Factor", TW_TYPE_FLOAT,
-            &m_fBounceFactor, "min=0.0");
+            &m_fBounceFactor, "step=0.1 min=0.0");
         TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping,
-            "min=0.0");
+            "step=0.1 min=0.0");
         TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &m_fStiffness,
-            "min=0.01");
+            "step=0.1 min=0.01");
         TwAddVarRW(DUC->g_pTweakBar, "Mass", TW_TYPE_FLOAT, &m_fMass, "min=0.01");
         TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &m_fGravity,
             "min=0.0");
-        break;
-    case 4:
-        break;
-    default:
         break;
     }
 }
@@ -88,6 +87,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase) {
     case 4:
         cout << "Demo5!\n";
         reset();
+        setupDemoFive();
         break;
     default:
         cout << "Empty Test!\n";
@@ -242,6 +242,11 @@ void MassSpringSystemSimulator::setupDemoFour() {
     // Object 3 TBD
 }
 
+void MassSpringSystemSimulator::setupDemoFive() {
+    m_iIntegrator = LEAPFROG;
+    setupDemoFour();
+}
+
 void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {}
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
@@ -352,7 +357,8 @@ void MassSpringSystemSimulator::applyExternalForce(Vec3 force) {
     }
 }
 
-void MassSpringSystemSimulator::computeForces(std::vector<MassPoint>& massPoints) {
+void MassSpringSystemSimulator::computeForces(
+    std::vector<MassPoint>& massPoints) {
     for (auto& s : m_springs) {
         Vec3 d = massPoints[s.m_iMasspoint1].m_position -
             massPoints[s.m_iMasspoint2].m_position;
@@ -434,4 +440,14 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
     }
 }
 
-void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {}
+void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {
+    for (auto& p : m_massPoints) {
+        if (!p.m_isFixed) {
+            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
+            p.m_velocity +=
+                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
+            // newPos = oldPos + deltaT * oldVel
+            p.m_position += timeStep * p.m_velocity;
+        }
+    }
+}
