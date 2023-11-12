@@ -151,7 +151,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 		createTwoMassPoints();
 		break;
 	case 3:
-		cout << "Demo 4: Complex";
+		cout << "Demo 4: Complex\n";
 		createTenSprings();
 		break;
 	case 4:
@@ -350,8 +350,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity);
 
 			// Calculate velocities (Velocity is calculated first, because Leap-Frog)
-			massPoint1.velocity = massPoint1.velocity + (accAtOldPosMp1.operator*(timeStep));
-			massPoint2.velocity = massPoint2.velocity + (accAtOldPosMp2.operator*(timeStep));
+			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
+			integrateVelocity(massPoint2, accAtOldPosMp2, timeStep);
 
 			// Calculate positions
 			integratePosition(massPoint1, timeStep);
