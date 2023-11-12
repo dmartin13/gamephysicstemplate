@@ -10,33 +10,6 @@ MassSpringSystemSimulator::MassSpringSystemSimulator()
 	m_iIntegrator = 0;
 
 	m_externalForce = Vec3();
-
-	// Creating some mass points and a spring
-	MassPoint mp1, mp2;
-	mp1.position = Vec3(0, 2, 0);
-	mp1.initPos = mp1.position;
-	mp1.velocity = Vec3(0, -1, 0);
-	mp1.initVel = mp1.velocity;
-	mp1.mass = 10.0f;
-	mp1.isFixed = false;
-
-	mp2.position = Vec3(0, -0.4, 0);
-	mp2.initPos = mp2.position;
-	mp2.velocity = Vec3(0, 1, 0);
-	mp2.initVel = mp2.velocity;
-	mp2.mass = 10.0f;
-	mp2.isFixed = false;
-
-	Spring spring;
-	spring.initialLength = 3.0f;
-	spring.stiffness = 30.0f;
-
-	massPoints.push_back(mp1);
-	spring.massPoint1 = massPoints.size() - 1;
-	massPoints.push_back(mp2);
-	spring.massPoint2 = massPoints.size() - 1;
-	springs.push_back(spring);
-
 }
 
 const char* MassSpringSystemSimulator::getTestCasesStr()
@@ -72,35 +45,9 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 	case 0:
 		//break;
 	case 1:
-		for (int i{ 0 }; i < springs.size(); i++)
-		{
-			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
-			Vec3 massPoint2Pos = massPoints.at(springs.at(i).massPoint2).position;
-
-			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-			DUC->drawSphere(massPoint1Pos, Vec3(0.05f));
-			DUC->drawSphere(massPoint2Pos, Vec3(0.05f));
-
-			DUC->beginLine();
-			DUC->drawLine(massPoint1Pos, Vec3(1), massPoint2Pos, Vec3(1));
-			DUC->endLine();
-		}
-		break;
+		//break;
 	case 2: 
-		for (int i{ 0 }; i < springs.size(); i++)
-		{
-			Vec3 massPoint1Pos = massPoints.at(springs.at(i).massPoint1).position;
-			Vec3 massPoint2Pos = massPoints.at(springs.at(i).massPoint2).position;
-
-			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
-			DUC->drawSphere(massPoint1Pos, Vec3(0.05f));
-			DUC->drawSphere(massPoint2Pos, Vec3(0.05f));
-
-			DUC->beginLine();
-			DUC->drawLine(massPoint1Pos, Vec3(1), massPoint2Pos, Vec3(1));
-			DUC->endLine();
-		}
-		break;
+		//break;
 	case 3: 
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
@@ -121,6 +68,38 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
 	}
 }
 
+void MassSpringSystemSimulator::createTwoMassPoints()
+{
+	MassPoint mp1, mp2;
+	mp1.position = Vec3(0, 0, 0);
+	mp1.initPos = mp1.position;
+	mp1.velocity = Vec3(-1, 0, 0);
+	mp1.initVel = mp1.velocity;
+	mp1.mass = 10.0f;
+	mp1.isFixed = false;
+
+	mp2.position = Vec3(0, 2, 0);
+	mp2.initPos = mp2.position;
+	mp2.velocity = Vec3(1, 0, 0);
+	mp2.initVel = mp2.velocity;
+	mp2.mass = 10.0f;
+	mp2.isFixed = false;
+
+	Spring spring;
+	spring.initialLength = 3.0f;
+	spring.stiffness = 30.0f;
+
+	massPoints.clear();
+	springs.clear();
+
+	massPoints.push_back(mp1);
+	spring.massPoint1 = massPoints.size() - 1;
+	massPoints.push_back(mp2);
+	spring.massPoint2 = massPoints.size() - 1;
+	springs.push_back(spring);
+}
+
+bool firstTimeOneStep = true;
 void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 {
 	m_iTestCase = testCase;
@@ -128,31 +107,22 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 	{
 	case 0:
 		cout << "1 Step ! \n";
+		createTwoMassPoints();
+		firstTimeOneStep = true;
 		break;
 	case 1:
 		cout << "Euler !\n";
-		// Reset position & velocity
-		for (int i{ 0 }; i < massPoints.size(); i++)
-		{
-			massPoints.at(i).position = massPoints.at(i).initPos;
-			massPoints.at(i).velocity = massPoints.at(i).initVel;
-		}
+		createTwoMassPoints();
 		break;
 	case 2:
 		cout << "Midpoint !\n";
 		for (int i{ 0 }; i < massPoints.size(); i++)
-		{
-			massPoints.at(i).position = massPoints.at(i).initPos;
-			massPoints.at(i).velocity = massPoints.at(i).initVel;
-		}
+		createTwoMassPoints();
+
 		break;
 	case 3:
 		cout << "Leap Frog !\n";
-		for (int i{ 0 }; i < massPoints.size(); i++)
-		{
-			massPoints.at(i).position = massPoints.at(i).initPos;
-			massPoints.at(i).velocity = massPoints.at(i).initVel;
-		}
+		createTwoMassPoints();
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -209,6 +179,40 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 	switch (m_iTestCase)
 	{// handling different cases
 	case 0: // 1 Step
+		if (firstTimeOneStep)
+		{
+			for (int i{ 0 }; i < springs.size(); i++)
+			{
+				// Getting the mass point for a string
+				Spring& spring = springs.at(i);
+				MassPoint& massPoint1 = massPoints.at(spring.massPoint1);
+				MassPoint& massPoint2 = massPoints.at(spring.massPoint2);
+
+				// Calculate the force
+				Vec3 pointDiff = massPoint1.position - massPoint2.position;
+				spring.currentLength = sqrtf(powf(pointDiff.X, 2) + powf(pointDiff.Y, 2) + powf(pointDiff.Z, 2));
+				Vec3 forceOnMp1 = (-spring.stiffness) * (spring.currentLength - spring.initialLength) * (pointDiff.operator/(spring.currentLength));
+				Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
+
+				// Calculate accelerations using Euler
+				Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * massPoint1.velocity);
+				Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity);
+
+				// Calculate positions using Euler
+				integratePosition(massPoint1, timeStep);
+				integratePosition(massPoint2, timeStep);
+
+				// Calculate velocities using Euler
+				massPoint1.velocity = massPoint1.velocity + (accAtOldPosMp1.operator*(timeStep));
+				massPoint2.velocity = massPoint2.velocity + (accAtOldPosMp2.operator*(timeStep));
+
+				std::cout << "Mp1 Pos: " << massPoint1.position << std::endl;
+				std::cout << "Mp1 Vel: " << massPoint1.velocity << std::endl << std::endl;
+				std::cout << "Mp2 Pos: " << massPoint2.position << std::endl;
+				std::cout << "Mp2 Vel: " << massPoint2.velocity << std::endl << std::endl;
+			}
+			firstTimeOneStep = false;
+		}
 		break;
 	case 1: // Euler Method
 		for (int i{ 0 }; i < springs.size(); i++)
@@ -235,14 +239,6 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			// Calculate velocities using Euler
 			massPoint1.velocity = massPoint1.velocity + (accAtOldPosMp1.operator*(timeStep));
 			massPoint2.velocity = massPoint2.velocity + (accAtOldPosMp2.operator*(timeStep));
-			
-			// #TODO --> Add gravity, and prevent position y from going below 0
-
-			/*std::cout << "Length: " << spring.currentLength - spring.initialLength << std::endl;
-			std::cout << "Mp1 Pos: " << massPoint1.position << std::endl;
-			std::cout << "Mp1 Vel: " << massPoint1.velocity << std::endl << std::endl;
-			std::cout << "Mp2 Pos: " << massPoint2.position << std::endl;
-			std::cout << "Mp2 Vel: " << massPoint2.velocity << std::endl << std::endl;*/
 		}
 		break;
 	case 2: // Midpoint Method

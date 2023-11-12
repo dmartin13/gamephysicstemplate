@@ -56,7 +56,7 @@ public:
 	};
 
 	void integratePosition(MassPoint& p, float timeStep, bool isMidstep = false);
-	void integrateVelocity(MassPoint& p, float timeStep);
+	void createTwoMassPoints();
 
 
 private:
