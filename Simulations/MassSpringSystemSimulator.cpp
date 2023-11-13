@@ -29,6 +29,7 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 	case 2:break;
 	case 3:
 		TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_BOOLCPP, &m_aGravity, false);
+		TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &m_fDamping, "min=0.0 step=0.01");
 		break;
 	case 4: break;
 	default:break;
@@ -279,8 +280,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 				Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
 
 				// Calculate accelerations using Euler
-				Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * massPoint1.velocity);
-				Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity);
+				Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass);
+				Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass);
 
 				// Calculate positions using Euler
 				integratePosition(massPoint1, timeStep);
@@ -313,8 +314,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
 
 			// Calculate accelerations using Euler
-			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * massPoint1.velocity);
-			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity);
+			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass);
+			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass);
 
 			// Calculate positions using Euler
 			integratePosition(massPoint1, timeStep);
@@ -360,8 +361,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			forceOnMp2 = forceOnMp1.operator*(-1);
 
 			// Calculate Midstep Acceleration
-			Vec3 accAtMidPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * midVelMp1);
-			Vec3 accAtMidPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * midVelMp2);
+			Vec3 accAtMidPosMp1 = forceOnMp1.operator/(massPoint1.mass);
+			Vec3 accAtMidPosMp2 = forceOnMp2.operator/(massPoint2.mass);
 			/* ========================== Midstep ========================== */
 
 
@@ -389,8 +390,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
 
 			// Calculate accelerations
-			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (0.0f * massPoint1.velocity) + Vec3(0, m_aGravity ? -9.8 : 0, 0);
-			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (0.0f * massPoint2.velocity) + Vec3(0, m_aGravity ? -9.8 : 0, 0);
+			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * massPoint1.velocity) + Vec3(0, m_aGravity ? -0.8 : 0, 0);
+			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity) + Vec3(0, m_aGravity ? -0.8 : 0, 0);
 
 			// Calculate velocities (Velocity is calculated first, because Leap-Frog)
 			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
@@ -416,8 +417,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			Vec3 forceOnMp2 = forceOnMp1.operator*(-1);
 
 			// Calculate accelerations
-			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass) - (m_fDamping * massPoint1.velocity);
-			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass) - (m_fDamping * massPoint2.velocity);
+			Vec3 accAtOldPosMp1 = forceOnMp1.operator/(massPoint1.mass);
+			Vec3 accAtOldPosMp2 = forceOnMp2.operator/(massPoint2.mass);
 
 			// Calculate velocities (Velocity is calculated first, because Leap-Frog)
 			integrateVelocity(massPoint1, accAtOldPosMp1, timeStep);
