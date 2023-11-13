@@ -494,7 +494,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
         for (auto& p : m_massPoints) {
             if (p.m_position.y < -1.f) {
                 // reset position from floor
-                p.m_position.y = -1.0001f;
+                p.m_position.y = -0.9999f;
                 // bounce back from floor
                 p.m_velocity.y *= -m_fBounceFactor;
             }
