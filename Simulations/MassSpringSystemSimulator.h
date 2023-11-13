@@ -58,8 +58,7 @@ public:
 	void integratePosition(MassPoint& p, float timeStep, bool isMidstep = false);
 	void integrateVelocity(MassPoint& p, Vec3 acc, float timeStep);
 	void createTwoMassPoints();
-	void createTenSprings();
-
+	void createSpringsGrid();
 
 private:
 	// Data Attributes

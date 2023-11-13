@@ -98,7 +98,7 @@ void MassSpringSystemSimulator::createTwoMassPoints()
 	springs.push_back(spring);
 }
 
-void MassSpringSystemSimulator::createTenSprings()
+void MassSpringSystemSimulator::createSpringsGrid()
 {
 	std::mt19937 eng;
 	std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
@@ -199,7 +199,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
 		break;
 	case 3:
 		cout << "Demo 4: Complex\n";
-		createTenSprings();
+		createSpringsGrid();
 		break;
 	case 4:
 		cout << "Demo 5: Leap Frog !\n";
@@ -370,7 +370,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 			integrateVelocity(massPoint2, accAtMidPosMp2, timeStep);
 		}
 		break;
-	case 3: // Complext simulation of 10 springs
+	case 3: // Complex simulation of a grid of springs
 		for (int i{ 0 }; i < springs.size(); i++)
 		{
 			// Getting the mass point for a string
