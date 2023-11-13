@@ -146,41 +146,6 @@ void MassSpringSystemSimulator::createSpringsGrid()
 			}
 		}
 	}
-	/*for (int i{ 0 }; i < 10; i++)
-	{
-		MassPoint mp1, mp2;
-		mp1.position = Vec3(randPos(eng), randPos(eng), randPos(eng));
-		mp1.velocity = Vec3(randVel(eng), randVel(eng), randVel(eng));
-		mp1.mass = 3.0f;
-		mp1.isFixed = false;
-
-		mp2.position = Vec3(randPos(eng), randPos(eng), randPos(eng));
-		mp2.velocity = Vec3(randVel(eng), randVel(eng), randVel(eng));
-		mp2.mass = 3.0f;
-		mp2.isFixed = false;
-
-		Spring spring;
-		spring.initialLength = 0.5f;
-		spring.stiffness = 20.0f;
-
-		massPoints.push_back(mp1);
-		spring.massPoint1 = massPoints.size() - 1;
-		massPoints.push_back(mp2);
-		spring.massPoint2 = massPoints.size() - 1;
-		springs.push_back(spring);
-	}
-	
-	for (int i{ 0 }; i < springs.size()-2; i += 2)
-	{
-		Spring spring;
-		spring.initialLength = 0.5f;
-		spring.stiffness = 20.0f;
-
-		spring.massPoint1 = i;
-		spring.massPoint2 = i + 2;
-
-		springs.push_back(spring);
-	}*/
 }
 
 bool firstTimeOneStep = true;
