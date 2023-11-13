@@ -76,5 +76,6 @@ private:
 	// New Additions
 	std::vector<MassPoint> massPoints;
 	std::vector<Spring> springs;
+	bool m_aGravity;
 };
 #endif
