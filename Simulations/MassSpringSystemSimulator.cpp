@@ -432,8 +432,6 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
     for (auto& p : m_massPoints) {
         p.clearForce();
     }
-    // add gravity
-    addGravity(m_massPoints);
     // force computation
     computeForces(m_massPoints);
     // damping
@@ -553,12 +551,6 @@ void MassSpringSystemSimulator::applyDamping(
     }
 }
 
-void MassSpringSystemSimulator::addGravity(std::vector<MassPoint>& massPoints) {
-    for (auto& p : massPoints) {
-        p.m_force += m_fMass * Vec3(0.0f, -m_fGravity, 0.0f);
-    }
-}
-
 void MassSpringSystemSimulator::integrate(float timeStep) {
     switch (m_iIntegrator) {
     case EULER:
@@ -580,8 +572,9 @@ void MassSpringSystemSimulator::integrateEuler(float timeStep) {
         if (!p.m_isFixed) {
             // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
-            // newVel = oldVel + deltaT * (acceleration(=force/mass))
-            p.m_velocity += timeStep * ((p.m_force / m_fMass));
+            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
+            p.m_velocity +=
+                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 }
@@ -595,7 +588,8 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
     for (auto& p : massPointsTmp) {
         if (!p.m_isFixed) {
             p.m_position += (0.5f * timeStep) * p.m_velocity;
-            p.m_velocity += (0.5f * timeStep) * ((p.m_force / m_fMass));
+            p.m_velocity += (0.5f * timeStep) *
+                ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 
@@ -613,7 +607,8 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
         if (!m_massPoints[i].m_isFixed) {
             m_massPoints[i].m_position += timeStep * massPointsTmp[i].m_velocity;
             m_massPoints[i].m_velocity +=
-                timeStep * ((massPointsTmp[i].m_force / m_fMass));
+                timeStep * ((massPointsTmp[i].m_force / m_fMass) +
+                    Vec3(0.0f, -m_fGravity, 0.0f));
         }
     }
 }
@@ -621,8 +616,9 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
 void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {
     for (auto& p : m_massPoints) {
         if (!p.m_isFixed) {
-            // newVel = oldVel + deltaT * (acceleration(=force/mass))
-            p.m_velocity += timeStep * ((p.m_force / m_fMass));
+            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
+            p.m_velocity +=
+                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
             // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
         }
