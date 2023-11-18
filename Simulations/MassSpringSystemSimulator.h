@@ -74,6 +74,7 @@ public:
     void integrate(float timeStep);
     void computeForces(std::vector<MassPoint>& massPoints);
     void applyDamping(std::vector<MassPoint>& massPoints);
+    void addGravity(std::vector<MassPoint>& massPoints);
 
     void computeDemoOne();
     void setupDemoTwo();

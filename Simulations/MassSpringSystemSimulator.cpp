@@ -219,55 +219,7 @@ void MassSpringSystemSimulator::setupDemoFour() {
     addSpring(p03, p04, 1.f);
     addSpring(p04, p02, 1.f);
 
-    // Object 2 (star)
-    // int p10 = addMassPoint(Vec3(0.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    // int p11 = addMassPoint(Vec3(0.f, 6.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    // int p12 = addMassPoint(Vec3(-sqrt(2.f), 4.f + sqrt(2.f), 0.f),
-    //     Vec3(0.f, 0.f, 0.f), false);
-    // int p13 = addMassPoint(Vec3(-2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    // int p14 = addMassPoint(Vec3(-sqrt(2.f), 4.f - sqrt(2.f), 0.f),
-    //     Vec3(0.f, 0.f, 0.f), false);
-    // int p15 = addMassPoint(Vec3(0.f, 2.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    // int p16 = addMassPoint(Vec3(sqrt(2.f), 4.f - sqrt(2.f), 0.f),
-    //     Vec3(0.f, 0.f, 0.f), false);
-    // int p17 = addMassPoint(Vec3(2.f, 4.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
-    // int p18 = addMassPoint(Vec3(sqrt(2.f), 4.f + sqrt(2.f), 0.f),
-    //     Vec3(0.f, 0.f, 0.f), false);
-    // addSpring(p10, p11,
-    //     sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //         m_massPoints[p11].m_position)));
-    // addSpring(p10, p12, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p12].m_position)));
-    // addSpring(p10, p13, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p13].m_position)));
-    // addSpring(p10, p14, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p14].m_position)));
-    // addSpring(p10, p15, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p15].m_position)));
-    // addSpring(p10, p16, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p16].m_position)));
-    // addSpring(p10, p17, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p17].m_position)));
-    // addSpring(p10, p18, sqrt(m_massPoints[p10].m_position.squaredDistanceTo(
-    //     m_massPoints[p18].m_position)));
-    // addSpring(p11, p12, sqrt(m_massPoints[p11].m_position.squaredDistanceTo(
-    //     m_massPoints[p12].m_position)));
-    // addSpring(p12, p13, sqrt(m_massPoints[p12].m_position.squaredDistanceTo(
-    //     m_massPoints[p13].m_position)));
-    // addSpring(p13, p14, sqrt(m_massPoints[p13].m_position.squaredDistanceTo(
-    //     m_massPoints[p14].m_position)));
-    // addSpring(p14, p15, sqrt(m_massPoints[p14].m_position.squaredDistanceTo(
-    //     m_massPoints[p15].m_position)));
-    // addSpring(p15, p16, sqrt(m_massPoints[p15].m_position.squaredDistanceTo(
-    //     m_massPoints[p16].m_position)));
-    // addSpring(p16, p17, sqrt(m_massPoints[p16].m_position.squaredDistanceTo(
-    //     m_massPoints[p17].m_position)));
-    // addSpring(p17, p18, sqrt(m_massPoints[p17].m_position.squaredDistanceTo(
-    //     m_massPoints[p18].m_position)));
-    // addSpring(p18, p11, sqrt(m_massPoints[p18].m_position.squaredDistanceTo(
-    //     m_massPoints[p11].m_position)));
-
-    // Object 3 TBD
+    // Object 3
     int p20 = addMassPoint(Vec3(-1.f, 1.f, -1.f), Vec3(0.f, 0.f, 0.f), false);
     int p21 = addMassPoint(Vec3(-1.f, 1.f, 0.f), Vec3(0.f, 0.f, 0.f), false);
     int p22 = addMassPoint(Vec3(-1.f, 1.f, 1.f), Vec3(0.f, 0.f, 0.f), false);
@@ -468,7 +420,6 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed) {
                 m_massPoints[m_massPoints.size() - 1].m_position;
         }
     }
-
 }
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
@@ -481,6 +432,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep) {
     for (auto& p : m_massPoints) {
         p.clearForce();
     }
+    // add gravity
+    addGravity(m_massPoints);
     // force computation
     computeForces(m_massPoints);
     // damping
@@ -600,6 +553,12 @@ void MassSpringSystemSimulator::applyDamping(
     }
 }
 
+void MassSpringSystemSimulator::addGravity(std::vector<MassPoint>& massPoints) {
+    for (auto& p : massPoints) {
+        p.m_force += Vec3(0.0f, -m_fGravity, 0.0f);
+    }
+}
+
 void MassSpringSystemSimulator::integrate(float timeStep) {
     switch (m_iIntegrator) {
     case EULER:
@@ -621,9 +580,8 @@ void MassSpringSystemSimulator::integrateEuler(float timeStep) {
         if (!p.m_isFixed) {
             // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
-            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
-            p.m_velocity +=
-                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
+            // newVel = oldVel + deltaT * (acceleration(=force/mass))
+            p.m_velocity += timeStep * ((p.m_force / m_fMass));
         }
     }
 }
@@ -637,8 +595,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
     for (auto& p : massPointsTmp) {
         if (!p.m_isFixed) {
             p.m_position += (0.5f * timeStep) * p.m_velocity;
-            p.m_velocity += (0.5f * timeStep) *
-                ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
+            p.m_velocity += (0.5f * timeStep) * ((p.m_force / m_fMass));
         }
     }
 
@@ -656,8 +613,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
         if (!m_massPoints[i].m_isFixed) {
             m_massPoints[i].m_position += timeStep * massPointsTmp[i].m_velocity;
             m_massPoints[i].m_velocity +=
-                timeStep * ((massPointsTmp[i].m_force / m_fMass) +
-                    Vec3(0.0f, -m_fGravity, 0.0f));
+                timeStep * ((massPointsTmp[i].m_force / m_fMass));
         }
     }
 }
@@ -666,8 +622,7 @@ void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {
     for (auto& p : m_massPoints) {
         if (!p.m_isFixed) {
             // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
-            p.m_velocity +=
-                timeStep * ((p.m_force / m_fMass) + Vec3(0.0f, -m_fGravity, 0.0f));
+            p.m_velocity += timeStep * ((p.m_force / m_fMass));
             // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
         }
