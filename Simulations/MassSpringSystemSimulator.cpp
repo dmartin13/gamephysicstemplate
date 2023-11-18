@@ -555,7 +555,7 @@ void MassSpringSystemSimulator::applyDamping(
 
 void MassSpringSystemSimulator::addGravity(std::vector<MassPoint>& massPoints) {
     for (auto& p : massPoints) {
-        p.m_force += Vec3(0.0f, -m_fGravity, 0.0f);
+        p.m_force += m_fMass * Vec3(0.0f, -m_fGravity, 0.0f);
     }
 }
 
@@ -621,7 +621,7 @@ void MassSpringSystemSimulator::integrateMidpoint(float timeStep) {
 void MassSpringSystemSimulator::integrateLeapfrog(float timeStep) {
     for (auto& p : m_massPoints) {
         if (!p.m_isFixed) {
-            // newVel = oldVel + deltaT * (acceleration(=force/mass + gravity))
+            // newVel = oldVel + deltaT * (acceleration(=force/mass))
             p.m_velocity += timeStep * ((p.m_force / m_fMass));
             // newPos = oldPos + deltaT * oldVel
             p.m_position += timeStep * p.m_velocity;
