@@ -32,6 +32,18 @@ public:
 	void setOrientationOf(int i,Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
 
+
+	// New Additions
+	struct RigidBody {
+		Vec3 position, velocity, rotation;
+		Quat orientation;
+		int mass = 1;
+		float damping = 0.0f;
+		Mat4 tranformMatrix;
+	};
+
+
+
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
@@ -42,5 +54,9 @@ private:
 	Point2D m_mouse;
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
-	};
+
+
+	// New Additions
+	std::vector<RigidBody> rigidBodies;
+};
 #endif
