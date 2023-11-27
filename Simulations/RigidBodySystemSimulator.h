@@ -1,8 +1,7 @@
 #ifndef RIGIDBODYSYSTEMSIMULATOR_h
 #define RIGIDBODYSYSTEMSIMULATOR_h
 #include "Simulator.h"
-// add your header for your rigid body system, for e.g.,
-// #include "rigidBodySystem.h"
+#include "collisionDetect.h"
 
 #define TESTCASEUSEDTORUNTEST 2
 
@@ -18,8 +17,9 @@ struct RigidBody {
 	Vec3 force;
 	Vec3 torque;
 	Mat4 InvIntertiaTensor;
-	Quat orientation = Quat(Vec3(1, 0, 0), 0);
-	Vec3 inverseInertia = Vec3(); //Diagonal of matrix
+	Quat orientation;
+	Mat4 worldMatrix;
+	bool fixed;
 };
 
 class RigidBodySystemSimulator : public Simulator {
@@ -45,8 +45,13 @@ public:
 	Vec3 getAngularVelocityOfRigidBody(int i);
 	void applyForceOnBody(int i, Vec3 loc, Vec3 force);
 	void addRigidBody(Vec3 position, Vec3 size, int mass);
+	void addRigidBodyInternal(Vec3 position, Vec3 size, int mass, std::vector<RigidBody>& storage);
 	void setOrientationOf(int i, Quat orientation);
 	void setVelocityOf(int i, Vec3 velocity);
+
+	Mat4 calcWorldMatrix(RigidBody& rb);
+	void calculateImpulse(CollisionInfo& colInfo, RigidBody& rbA, RigidBody& rbB);
+	void setGravity(float g);
 
 private:
 	// Attributes
@@ -60,5 +65,14 @@ private:
 	Point2D m_oldtrackmouse;
 
 	std::vector<RigidBody> rigidBodies;
+
+	bool timestepOverwrite{ false };
+	float ownTimestep;
+	float c = 0.;
+	float gravity = 0;
+	bool gravitySet = false;
+
+	//constant rigidbodies
+	std::vector<RigidBody> constRigidBodies;
 };
 #endif
