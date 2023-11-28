@@ -53,6 +53,9 @@ void RigidBodySystemSimulator::drawFrame(
     for (const auto& rb : rigidBodies) {
         DUC->drawRigidBody(rb.worldMatrix);
     }
+    // for (const auto& rb : constRigidBodies) {
+    //     DUC->drawRigidBody(rb.worldMatrix);
+    // }
 }
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
@@ -105,10 +108,18 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
             gravitySet = true;
         }
 
-        addRigidBodyInternal(Vec3(0, -6, 0), Vec3(20, 10, 20), 1, constRigidBodies);
-        // set inverse inertia tensor to 0 to simulate fixed body
-        constRigidBodies[0].InvIntertiaTensor = Mat4(0);
+        addRigidBodyInternal(Vec3(0, -2, 0), Vec3(10, 2, 10), 1, constRigidBodies);
         constRigidBodies[0].fixed = true;
+        // addRigidBodyInternal(Vec3(0, 10, 0), Vec3(10, 2, 10), 1, constRigidBodies);
+        // constRigidBodies[1].fixed = true;
+        // addRigidBodyInternal(Vec3(-6, 4, 0), Vec3(2, 10, 10), 1, constRigidBodies);
+        // constRigidBodies[2].fixed = true;
+        // addRigidBodyInternal(Vec3(6, 4, 0), Vec3(2, 10, 10), 1, constRigidBodies);
+        // constRigidBodies[3].fixed = true;
+        // addRigidBodyInternal(Vec3(0, 4, 6), Vec3(10, 10, 2), 1, constRigidBodies);
+        // constRigidBodies[4].fixed = true;
+        // addRigidBodyInternal(Vec3(0, 4, -6), Vec3(10, 10, 2), 1, constRigidBodies);
+        // constRigidBodies[5].fixed = true;
 
         addRigidBody(Vec3(0., 0., 0.), Vec3(1., 0.6, 0.5), 2);
         setOrientationOf(0, Quat(0., 0., 90.));
@@ -130,23 +141,26 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
 }
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
-    // Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view
-    // plane) Point2D mouseDiff; mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
-    // mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
-    // if (mouseDiff.x != 0 || mouseDiff.y != 0)
-    // {
-    // 	Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() *
-    // DUC->g_camera.GetViewMatrix()); 	worldViewInv = worldViewInv.inverse();
-    // Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
-    // Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
-    // 	// find a proper scale!
-    // 	float inputScale = 0.001f;
-    // 	inputWorld = inputWorld * inputScale;
-    // 	m_vfMovableObjectPos = m_vfMovableObjectFinalPos + inputWorld;
-    // }
-    // else {
-    // 	m_vfMovableObjectFinalPos = m_vfMovableObjectPos;
-    // }
+    if (m_iTestCase == 3) {
+        //std::cout << "apply mouse" << std::endl;
+        Point2D mouseDiff;
+        mouseDiff.x = m_trackmouse.x - m_oldtrackmouse.x;
+        mouseDiff.y = m_trackmouse.y - m_oldtrackmouse.y;
+        if (mouseDiff.x != 0 || mouseDiff.y != 0)
+        {
+            Mat4 worldViewInv = Mat4(DUC->g_camera.GetWorldMatrix() *
+                DUC->g_camera.GetViewMatrix()); 	worldViewInv = worldViewInv.inverse();
+            Vec3 inputView = Vec3((float)mouseDiff.x, (float)-mouseDiff.y, 0);
+            Vec3 inputWorld = worldViewInv.transformVectorNormal(inputView);
+            // find a proper scale!
+            float inputScale = 0.1f;
+            inputWorld = inputWorld * inputScale;
+            for (int i = 0; i < rigidBodies.size(); ++i) {
+                applyForceOnBody(i, Vec3(0, 0, 0), inputWorld);
+            }
+        }
+    }
+
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
@@ -224,11 +238,19 @@ void RigidBodySystemSimulator::calculateImpulse(CollisionInfo& colInfo, RigidBod
     const auto relV = vA - vB;
 
     if (dot(relV, n) <= 0) {
-        // calculate impulse strength
+        // calculate impulse strength (numerator)
         const auto numerator = -(1.0 + c) * dot(relV, n);
+
+        // calculate denominator
+        // calculate inverse masses (if fixed, set to 0)
         const auto invMassA = rbA.fixed ? 0 : (1.0 / rbA.mass);
         const auto invMassB = rbB.fixed ? 0 : (1.0 / rbB.mass);
-        const auto denominator = invMassA + invMassB + dot(cross(rbA.InvIntertiaTensor * cross(xA, n), xA) + cross(rbB.InvIntertiaTensor * cross(xB, n), xB), n);
+        // calculate cross products
+        const auto crossA = rbA.fixed ? Vec3(0, 0, 0) : cross(rbA.InvIntertiaTensor * cross(xA, n), xA);
+        const auto crossB = rbB.fixed ? Vec3(0, 0, 0) : cross(rbB.InvIntertiaTensor * cross(xB, n), xB);
+        const auto denominator = invMassA + invMassB + dot(crossA + crossB, n);
+
+        // calculate J
         const auto J = numerator / denominator;
 
         // update velocities

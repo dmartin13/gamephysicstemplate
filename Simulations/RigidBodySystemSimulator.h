@@ -68,7 +68,7 @@ private:
 
 	bool timestepOverwrite{ false };
 	float ownTimestep;
-	float c = 0.;
+	float c = 1.;
 	float gravity = 0;
 	bool gravitySet = false;
 
