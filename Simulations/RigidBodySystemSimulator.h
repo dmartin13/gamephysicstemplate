@@ -4,6 +4,7 @@
 //add your header for your rigid body system, for e.g.,
 //#include "rigidBodySystem.h" 
 
+
 #define TESTCASEUSEDTORUNTEST 2
 
 class RigidBodySystemSimulator:public Simulator{
@@ -35,11 +36,12 @@ public:
 
 	// New Additions
 	struct RigidBody {
-		Vec3 position, velocity, rotation;
-		Quat orientation;
-		int mass = 1;
-		float damping = 0.0f;
-		Mat4 tranformMatrix;
+		Vec3 position, lVelocity = Vec3(), aVelocity = Vec3(), aMomentum = Vec3(), force = Vec3(), torque = Vec3(), inertiaInv = Vec3();
+		Vec3 size; // width, height, depth
+		Quat orientation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+		Mat4 objToWorldMat, inertiaTensorInv;
+
+		float mass = 1.0f, damping = 0.0f;
 	};
 
 
