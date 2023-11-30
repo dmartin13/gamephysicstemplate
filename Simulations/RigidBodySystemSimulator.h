@@ -3,7 +3,7 @@
 #include "Simulator.h"
 //add your header for your rigid body system, for e.g.,
 //#include "rigidBodySystem.h" 
-
+#include "collisionDetect.h"
 
 #define TESTCASEUSEDTORUNTEST 2
 
@@ -36,21 +36,27 @@ public:
 
 	// New Additions
 	struct RigidBody {
-		Vec3 position, lVelocity = Vec3(), aVelocity = Vec3(), aMomentum = Vec3(), force = Vec3(), torque = Vec3(), inertiaInv = Vec3();
+		Vec3 position, lVelocity = Vec3(), aVelocity = Vec3(), aMomentum = Vec3(), force = Vec3(), torque = Vec3();
 		Vec3 size; // width, height, depth
 		Quat orientation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 		Mat4 objToWorldMat, inertiaTensorInv;
 
 		float mass = 1.0f, damping = 0.0f;
+		bool isFixed = false;
 	};
 
-
+	void applyImpulse(CollisionInfo& collisionInfo, RigidBody& rbA, RigidBody& rbB);
+	Mat4 computeWorldMat(RigidBody& rb);
+	/* Converts from degree to radiants */
+	float degToRad(float degree);
+	void integrateVelPos(float timeStep);
 
 private:
 	// Attributes
 	// add your RigidBodySystem data members, for e.g.,
 	// RigidBodySystem * m_pRigidBodySystem; 
 	Vec3 m_externalForce;
+	Vec3  m_vfMovableObjectFinalPos;
 
 	// UI Attributes
 	Point2D m_mouse;
@@ -58,7 +64,10 @@ private:
 	Point2D m_oldtrackmouse;
 
 
+
 	// New Additions
 	std::vector<RigidBody> rigidBodies;
+	float c = 0.5f;
+	bool isFirstTime = true;
 };
 #endif
