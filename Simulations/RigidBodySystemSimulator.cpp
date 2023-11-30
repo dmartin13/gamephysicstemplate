@@ -43,6 +43,7 @@ void RigidBodySystemSimulator::reset() {
 
     // Clearing the rigidbodies std::vector
     rigidBodies.clear();
+    fixedRigidBodies.clear();
     isFirstTime = true;
 }
 
@@ -66,6 +67,11 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
             DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
             DUC->drawRigidBody(rigidBodies.at(i).objToWorldMat);
         }
+        for (int i{ 0 }; i < fixedRigidBodies.size(); i++)
+        {
+            DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(randCol(eng), randCol(eng), randCol(eng)));
+            DUC->drawRigidBody(fixedRigidBodies.at(i).objToWorldMat);
+        }
         break;
     default:
         break;
@@ -78,6 +84,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
     case 0:
         cout << "Demo 1\n";
         reset();
+        //spawnWalls();
 
         addRigidBody(Vec3(), Vec3(1.0f, 0.6f, 0.5f), 2);
         setOrientationOf(0, Quat(0.0f, 0.0f, degToRad(90.0f)));
@@ -86,6 +93,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
     case 1:
         cout << "Demo 2\n";
         reset();
+        //spawnWalls();
 
         addRigidBody(Vec3(), Vec3(1.0f, 0.6f, 0.5f), 2);
         setOrientationOf(0, Quat(0.0f, 0.0f, degToRad(90.0f)));
@@ -95,6 +103,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
     case 2:
         cout << "Demo 3\n";
         reset();
+        //spawnWalls();
 
         addRigidBody(Vec3(), Vec3(1.0f, 0.6f, 0.5f), 2);
         setOrientationOf(0, Quat(0.0f, 0.0f, degToRad(90.0f)));
@@ -106,7 +115,14 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
     case 3:
         cout << "Demo 4\n";
         reset();
+        spawnWalls();
 
+        addRigidBody(Vec3(), Vec3(1.0f, 0.6f, 0.5f), 2);
+        setOrientationOf(0, Quat(0.0f, 0.0f, degToRad(90.0f)));
+
+        addRigidBody(Vec3(-1.5f, 1.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2);
+        setOrientationOf(1, Quat(0.0f, 0.0f, degToRad(90.0f)));
+        setVelocityOf(1, Vec3(0.1f, -0.1f, 0.0f));
         break;
     default:
         cout << "Empty Test!\n";
@@ -171,43 +187,55 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
 void RigidBodySystemSimulator::integrateVelPos(float timeStep) {
     for (auto& rb : rigidBodies)
     {
-        // Euler for linear velocity & position
-        rb.position += timeStep * rb.lVelocity;
-        rb.lVelocity += timeStep * (rb.force / rb.mass);
+        if (!rb.isFixed)
+        {
+            // Euler for linear velocity & position
+            rb.position += timeStep * rb.lVelocity;
+            rb.lVelocity += timeStep * (rb.force / rb.mass);
 
-        // Rotation update
-        rb.orientation += (Quat(rb.aVelocity.x, rb.aVelocity.y, rb.aVelocity.z, 0) * rb.orientation) * (0.5 * timeStep);
-        rb.orientation = rb.orientation.unit();
+            // Rotation update
+            rb.orientation += (Quat(rb.aVelocity.x, rb.aVelocity.y, rb.aVelocity.z, 0) * rb.orientation) * (0.5 * timeStep);
+            rb.orientation = rb.orientation.unit();
 
-        // Angular momentum
-        rb.aMomentum += timeStep * rb.torque;
+            // Angular momentum
+            rb.aMomentum += timeStep * rb.torque;
 
 
-        Mat4 rot = rb.orientation.getRotMat();
-        Mat4 rotT = rot;
-        rotT.transpose();
-        Mat4 newInertiaTensorInv = rot * rb.inertiaTensorInv * rotT;
+            Mat4 rot = rb.orientation.getRotMat();
+            Mat4 rotT = rot;
+            rotT.transpose();
+            Mat4 newInertiaTensorInv = rot * rb.inertiaTensorInv * rotT;
 
-        rb.aVelocity = newInertiaTensorInv * rb.aMomentum;
+            rb.aVelocity = newInertiaTensorInv * rb.aMomentum;
 
-        //reset forces and torque
-        rb.force = 0;
-        rb.torque = 0;
 
-        rb.objToWorldMat = computeWorldMat(rb);
-    }
+            rb.force = 0;
+            rb.torque = 0;
 
-    if (rigidBodies.size() >= 2) {
-        for (int i = 0; i < rigidBodies.size(); ++i) {
-            for (int j = i + 1; j < rigidBodies.size(); ++j) {
-                CollisionInfo collisionInfo = checkCollisionSAT(rigidBodies[i].objToWorldMat, rigidBodies[j].objToWorldMat);
-                if (collisionInfo.isValid) {
-                    applyImpulse(collisionInfo, rigidBodies[i], rigidBodies[j]);
-                }
-            }
+            rb.objToWorldMat = computeWorldMat(rb);
         }
     }
+
+    if (m_iTestCase >= 2) {
+        // Check collisions between dynamic rigid bodies
+        for (int i = 0; i < rigidBodies.size(); ++i)
+            for (int j = i + 1; j < rigidBodies.size(); ++j)
+                checkAndApplyCollision(rigidBodies.at(i), rigidBodies.at(j));
+    
+        // Check collisions between dynamic and fixed rigid bodies
+        for (int i = 0; i < rigidBodies.size(); ++i)
+            for (int j = 0; j < fixedRigidBodies.size(); ++j)
+                checkAndApplyCollision(rigidBodies.at(i), fixedRigidBodies.at(j));
+    }   
 }
+
+void RigidBodySystemSimulator::checkAndApplyCollision(RigidBody& rbA, RigidBody& rbB) {
+    CollisionInfo collisionInfo = checkCollisionSAT(rbA.objToWorldMat, rbB.objToWorldMat);
+    if (collisionInfo.isValid) {
+        applyImpulse(collisionInfo, rbA, rbB);
+    }
+}
+
 
 void RigidBodySystemSimulator::applyImpulse(CollisionInfo& collisionInfo, RigidBody& rbA, RigidBody& rbB)
 {
@@ -278,6 +306,19 @@ void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
     rigidBodies.push_back(rb);
 }
 
+void RigidBodySystemSimulator::addFixedRigidBody(Vec3 position, Vec3 size, int mass)
+{
+    RigidBody rb;
+    rb.isFixed = true;
+    rb.position = position;
+    rb.size = size;
+    rb.mass = mass;
+    rb.inertiaTensorInv = Mat4(0);
+
+    rb.objToWorldMat = computeWorldMat(rb);
+    fixedRigidBodies.push_back(rb);
+}
+
 Mat4 RigidBodySystemSimulator::computeWorldMat(RigidBody& rb) {
     const Mat4 scale = Mat4(rb.size.X, 0, 0, 0, 0, rb.size.Y, 0, 0, 0, 0, rb.size.Z, 0, 0, 0, 0, 1);
     const Mat4 rotate = rb.orientation.getRotMat();
@@ -308,6 +349,14 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i) { return rig
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation) { rigidBodies.at(i).orientation = orientation.unit(); }
 void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity) { rigidBodies.at(i).lVelocity = velocity; }
 float RigidBodySystemSimulator::degToRad(float degree) { return degree * (XM_PI / 180); }
+
+void RigidBodySystemSimulator::spawnWalls() {
+    addFixedRigidBody(Vec3(-2.0f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Left Wall
+    addFixedRigidBody(Vec3(2.0f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Right Wall
+
+    addFixedRigidBody(Vec3(0.0f, 2.0f, 0.0f), Vec3(4.0f, 0.1f, 3.0f), 1); // Top Wall
+    addFixedRigidBody(Vec3(0.0f, -1.0f, 0.0f), Vec3(4.0f, 0.1f, 3.0f), 1); // Bottom Wall
+}
 
 
 

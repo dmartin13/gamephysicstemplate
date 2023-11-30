@@ -47,9 +47,12 @@ public:
 
 	void applyImpulse(CollisionInfo& collisionInfo, RigidBody& rbA, RigidBody& rbB);
 	Mat4 computeWorldMat(RigidBody& rb);
-	/* Converts from degree to radiants */
 	float degToRad(float degree);
 	void integrateVelPos(float timeStep);
+
+	void addFixedRigidBody(Vec3 position, Vec3 size, int mass);
+	void spawnWalls();
+	void checkAndApplyCollision(RigidBody& rbA, RigidBody& rbB);
 
 private:
 	// Attributes
@@ -66,7 +69,7 @@ private:
 
 
 	// New Additions
-	std::vector<RigidBody> rigidBodies;
+	std::vector<RigidBody> rigidBodies, fixedRigidBodies;
 	float c = 0.5f;
 	bool isFirstTime = true;
 };
