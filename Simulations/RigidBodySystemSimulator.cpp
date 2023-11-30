@@ -27,8 +27,8 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     case 2:
         break;
     case 3:
-        TwAddVarRW(DUC->g_pTweakBar, "Linear Damping", TW_TYPE_FLOAT, &dampingLinear, "min=0.1 step=0.1");
-        TwAddVarRW(DUC->g_pTweakBar, "Angular Damping", TW_TYPE_FLOAT, &dampingAngular, "min=0.1 step=0.1");
+        TwAddVarRW(DUC->g_pTweakBar, "Linear Damping", TW_TYPE_FLOAT, &dampingLinear, "min=0.0 step=0.1");
+        TwAddVarRW(DUC->g_pTweakBar, "Angular Damping", TW_TYPE_FLOAT, &dampingAngular, "min=0.0 step=0.1");
         break;
     default:
         break;
@@ -123,7 +123,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         setOrientationOf(0, Quat(0.0f, 0.0f, degToRad(90.0f)));
 
         addRigidBody(Vec3(-1.5f, 1.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2);
-        setOrientationOf(1, Quat(0.0f, 0.0f, degToRad(90.0f)));
+        setOrientationOf(1, Quat(0.0f, 0.0f, degToRad(45.0f)));
         setVelocityOf(1, Vec3(0.1f, -0.1f, 0.0f));
 
         addRigidBody(Vec3(0.5f, 0.5f, 0.0f), Vec3(0.25f), 1);
@@ -229,13 +229,13 @@ void RigidBodySystemSimulator::integrateVelPos(float timeStep) {
 
     if (m_iTestCase >= 2) {
         // Check collisions between dynamic rigid bodies
-        for (int i = 0; i < rigidBodies.size(); ++i)
-            for (int j = i + 1; j < rigidBodies.size(); ++j)
+        for (int i = 0; i < rigidBodies.size(); i++)
+            for (int j = i + 1; j < rigidBodies.size(); j++)
                 checkAndApplyCollision(rigidBodies.at(i), rigidBodies.at(j));
     
         // Check collisions between dynamic and fixed rigid bodies
-        for (int i = 0; i < rigidBodies.size(); ++i)
-            for (int j = 0; j < fixedRigidBodies.size(); ++j)
+        for (int i = 0; i < rigidBodies.size(); i++)
+            for (int j = 0; j < fixedRigidBodies.size(); j++)
                 checkAndApplyCollision(rigidBodies.at(i), fixedRigidBodies.at(j));
     }   
 }
@@ -362,8 +362,8 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity) { rigidBodies
 float RigidBodySystemSimulator::degToRad(float degree) { return degree * (XM_PI / 180); }
 
 void RigidBodySystemSimulator::spawnWalls() {
-    addFixedRigidBody(Vec3(-2.0f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Left Wall
-    addFixedRigidBody(Vec3(2.0f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Right Wall
+    addFixedRigidBody(Vec3(-2.2f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Left Wall
+    addFixedRigidBody(Vec3(2.2f, 0.5f, 0.0f), Vec3(0.1f, 3.0f, 3.0f), 1); // Right Wall
 
     addFixedRigidBody(Vec3(0.0f, 2.0f, 0.0f), Vec3(4.0f, 0.1f, 3.0f), 1); // Top Wall
     addFixedRigidBody(Vec3(0.0f, -1.0f, 0.0f), Vec3(4.0f, 0.1f, 3.0f), 1); // Bottom Wall
