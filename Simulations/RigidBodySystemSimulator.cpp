@@ -27,6 +27,8 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     case 2:
         break;
     case 3:
+        TwAddVarRW(DUC->g_pTweakBar, "Linear Damping", TW_TYPE_FLOAT, &dampingLinear, "min=0.1 step=0.1");
+        TwAddVarRW(DUC->g_pTweakBar, "Angular Damping", TW_TYPE_FLOAT, &dampingAngular, "min=0.1 step=0.1");
         break;
     default:
         break;
