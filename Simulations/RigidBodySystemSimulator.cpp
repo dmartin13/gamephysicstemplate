@@ -123,6 +123,9 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         addRigidBody(Vec3(-1.5f, 1.0f, 0.0f), Vec3(1.0f, 0.6f, 0.5f), 2);
         setOrientationOf(1, Quat(0.0f, 0.0f, degToRad(90.0f)));
         setVelocityOf(1, Vec3(0.1f, -0.1f, 0.0f));
+
+        addRigidBody(Vec3(0.5f, 0.5f, 0.0f), Vec3(0.25f), 1);
+        addRigidBody(Vec3(0.5f, -0.5f, 0.0f), Vec3(0.25f), 1);
         break;
     default:
         cout << "Empty Test!\n";
@@ -189,14 +192,20 @@ void RigidBodySystemSimulator::integrateVelPos(float timeStep) {
     {
         if (!rb.isFixed)
         {
+            // Apply damping
+            if (m_iTestCase == 3)
+                rb.lVelocity *= (1.0 - dampingLinear * timeStep);
             // Euler for linear velocity & position
             rb.position += timeStep * rb.lVelocity;
             rb.lVelocity += timeStep * (rb.force / rb.mass);
 
+            
             // Rotation update
             rb.orientation += (Quat(rb.aVelocity.x, rb.aVelocity.y, rb.aVelocity.z, 0) * rb.orientation) * (0.5 * timeStep);
             rb.orientation = rb.orientation.unit();
-
+            // Apply angular damping
+            if (m_iTestCase == 3)
+                rb.aMomentum *= (1.0 - dampingAngular * timeStep);
             // Angular momentum
             rb.aMomentum += timeStep * rb.torque;
 

@@ -41,7 +41,7 @@ public:
 		Quat orientation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
 		Mat4 objToWorldMat, inertiaTensorInv;
 
-		float mass = 1.0f, damping = 0.0f;
+		float mass = 1.0f;
 		bool isFixed = false;
 	};
 
@@ -67,10 +67,9 @@ private:
 	Point2D m_oldtrackmouse;
 
 
-
 	// New Additions
 	std::vector<RigidBody> rigidBodies, fixedRigidBodies;
-	float c = 0.5f;
+	float c = 0.5f, dampingLinear = 0.2f, dampingAngular = 0.2;
 	bool isFirstTime = true;
 };
 #endif
