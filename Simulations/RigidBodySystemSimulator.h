@@ -44,6 +44,7 @@ public:
 		float mass = 1.0f;
 		bool isFixed = false;
 	};
+	const int MAX_LINEAR_VELOCITY = 5, MAX_ANGULAR_VELOCITY = 5;
 
 	void applyImpulse(CollisionInfo& collisionInfo, RigidBody& rbA, RigidBody& rbB);
 	Mat4 computeWorldMat(RigidBody& rb);

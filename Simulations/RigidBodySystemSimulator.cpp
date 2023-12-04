@@ -276,14 +276,33 @@ void RigidBodySystemSimulator::applyImpulse(CollisionInfo& collisionInfo, RigidB
 
         const double denominator = invMassA + invMassB + dot(rbA.inertiaTensorInv * angularImpulseA, normal) + dot(rbB.inertiaTensorInv * angularImpulseB, normal);
 
-        const double impulseMagnitude = numerator / denominator;
+        double impulseMagnitude = numerator / denominator;
+
+        // Introduce an impulse threshold to avoid excessive forces
+        const double impulseThreshold = 100.0; // Adjust this threshold to ensure stability
+        if (impulseMagnitude > impulseThreshold)
+        {
+            // Clamp impulse to the threshold value
+            impulseMagnitude = impulseThreshold;
+        }
 
         // Apply linear impulses
         if (!rbA.isFixed)
+        {
             rbA.lVelocity += (impulseMagnitude * normal) / rbA.mass;
-        if (!rbB.isFixed)
-            rbB.lVelocity -= (impulseMagnitude * normal) / rbB.mass;
+            rbA.lVelocity = Vec3(min(static_cast<int>(rbA.lVelocity.X), MAX_LINEAR_VELOCITY),
+                min(static_cast<int>(rbA.lVelocity.Y), MAX_LINEAR_VELOCITY), 
+                min(static_cast<int>(rbA.lVelocity.Z), MAX_LINEAR_VELOCITY));
+        }
 
+        if (!rbB.isFixed)
+        {
+            rbB.lVelocity -= (impulseMagnitude * normal) / rbB.mass;
+            rbB.lVelocity = Vec3(min(static_cast<int>(rbB.lVelocity.X), MAX_LINEAR_VELOCITY),
+                min(static_cast<int>(rbB.lVelocity.Y), MAX_LINEAR_VELOCITY),
+                min(static_cast<int>(rbB.lVelocity.Z), MAX_LINEAR_VELOCITY));
+        }
+        
         // Apply angular impulses
         if (!rbA.isFixed)
             rbA.aMomentum += cross(relativePosA, impulseMagnitude * normal);
@@ -291,6 +310,7 @@ void RigidBodySystemSimulator::applyImpulse(CollisionInfo& collisionInfo, RigidB
             rbB.aMomentum -= cross(relativePosB, impulseMagnitude * normal);
     }
 }
+
 
 
 
