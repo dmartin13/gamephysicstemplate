@@ -70,7 +70,7 @@ private:
 
 	// New Additions
 	std::vector<RigidBody> rigidBodies, fixedRigidBodies;
-	float c = 0.5f, dampingLinear = 0.0f, dampingAngular = 0.0f;
+	float c = 0.5f, dampingLinear = 0.0f, dampingAngular = 0.0f, gravity = 0.0f;
 	bool isFirstTime = true;
 };
 #endif

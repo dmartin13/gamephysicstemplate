@@ -29,6 +29,7 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     case 3:
         TwAddVarRW(DUC->g_pTweakBar, "Linear Damping", TW_TYPE_FLOAT, &dampingLinear, "min=0.0 step=0.1");
         TwAddVarRW(DUC->g_pTweakBar, "Angular Damping", TW_TYPE_FLOAT, &dampingAngular, "min=0.0 step=0.1");
+        TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &gravity, "max=0.0 step=-0.1");
         break;
     default:
         break;
@@ -138,6 +139,16 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
 
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
+
+    if (m_iTestCase == 3)
+    {
+        const Vec3 gravity(0.0f, gravity, 0.0f);
+        for (auto& rb : rigidBodies)
+            if (!rb.isFixed)
+                rb.force += gravity * rb.mass;     
+        
+    }
+
     if (m_iTestCase >= 1)
     {
         // Apply the mouse deltas to g_vfMovableObjectPos (move along cameras view plane)
