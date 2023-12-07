@@ -67,7 +67,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         setGravity(0);
 
         addRigidBody(Vec3(0., 0., 0.), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(0, Quat(0., 0., 90.));
+        setOrientationOf(0, Quat(0., 0., degToRad(90.0f)));
         applyForceOnBody(0, Vec3(0.3, 0.5, 0.25), Vec3(1., 1., 0.));
         simulateTimestep(2.);
         std::cout << "linearVelocity: " << getLinearVelocityOfRigidBody(0) << std::endl;
@@ -83,7 +83,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         ownTimestep = 0.01;
 
         addRigidBody(Vec3(0., 0., 0.), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(0, Quat(0., 0., 90.));
+        setOrientationOf(0, Quat(0., 0., degToRad(90.0f)));
         applyForceOnBody(0, Vec3(0.3, 0.5, 0.25), Vec3(1., 1., 0.));
 
         break;
@@ -93,20 +93,20 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         setGravity(0);
 
         addRigidBody(Vec3(0., 0., 0.), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(0, Quat(0., 0., 90.));
+        setOrientationOf(0, Quat(0., 0., degToRad(90.0f)));
 
         addRigidBody(Vec3(-1.5, 1., 1), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(1, Quat(45., 25., 45.));
+        setOrientationOf(1, Quat(degToRad(45.0f), degToRad(25.0f), degToRad(45.0f)));
         setVelocityOf(1, Vec3(0.2, -0.1, -0.2));
 
         break;
     case 3:
         cout << "Demo4!\n";
         reset();
-        if (!gravitySet) {
+       /* if (!gravitySet) {
             setGravity(0.5);
             gravitySet = true;
-        }
+        }*/
 
         addRigidBodyInternal(Vec3(0, -2, 0), Vec3(10, 2, 10), 1, constRigidBodies);
         constRigidBodies[0].fixed = true;
@@ -122,17 +122,17 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
         // constRigidBodies[5].fixed = true;
 
         addRigidBody(Vec3(0., 0., 0.), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(0, Quat(0., 0., 90.));
+        setOrientationOf(0, Quat(0., 0., degToRad(90.0f)));
 
         addRigidBody(Vec3(-0.5, 1., 1), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(1, Quat(1., 10., 70.));
+        setOrientationOf(1, Quat(degToRad(1.0f), degToRad(10.0f), degToRad(70.0f)));
         setVelocityOf(1, Vec3(0.2, -0.1, -0.2));
 
         addRigidBody(Vec3(0.5, 1.3, 0.5), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(2, Quat(0., 0., 0.));
+        setOrientationOf(2, Quat(degToRad(0.0f), degToRad(0.0f), degToRad(0.0f)));
 
         addRigidBody(Vec3(0.3, 2., 0), Vec3(1., 0.6, 0.5), 2);
-        setOrientationOf(3, Quat(23., 3., 67.));
+        setOrientationOf(3, Quat(degToRad(23.0f), degToRad(3.0f), degToRad(67.0f)));
         break;
     default:
         cout << "Empty Test!\n";
@@ -361,3 +361,5 @@ void RigidBodySystemSimulator::setVelocityOf(int i, Vec3 velocity) {
 void RigidBodySystemSimulator::setGravity(float g) {
     gravity = g;
 }
+
+float RigidBodySystemSimulator::degToRad(float degree) { return degree * (XM_PI / 180); }

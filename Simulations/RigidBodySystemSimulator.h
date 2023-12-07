@@ -52,6 +52,7 @@ public:
 	Mat4 calcWorldMatrix(RigidBody& rb);
 	void calculateImpulse(CollisionInfo& colInfo, RigidBody& rbA, RigidBody& rbB);
 	void setGravity(float g);
+	float degToRad(float degree);
 
 private:
 	// Attributes
