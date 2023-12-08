@@ -108,7 +108,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
             gravitySet = true;
         }*/
 
-        addRigidBodyInternal(Vec3(0, -2, 0), Vec3(10, 2, 10), 1, constRigidBodies);
+        addRigidBodyInternal(Vec3(0, -6, 0), Vec3(10, 10, 10), 1, constRigidBodies);
         constRigidBodies[0].fixed = true;
         // addRigidBodyInternal(Vec3(0, 10, 0), Vec3(10, 2, 10), 1, constRigidBodies);
         // constRigidBodies[1].fixed = true;
