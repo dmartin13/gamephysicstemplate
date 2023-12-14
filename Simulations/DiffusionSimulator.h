@@ -29,8 +29,13 @@ public:
 	void drawObjects();
 
 	// Feel free to change the signature of these functions, add arguments, etc.
-	void diffuseTemperatureExplicit();
+	void diffuseTemperatureExplicit(float timeStep);
 	void diffuseTemperatureImplicit();
+	
+	// Define grid parameters (m and n)
+	int m = 16;
+	int n = 16;
+	std::vector<std::vector<float>> temperatureGrid;
 
 private:
 	// Attributes

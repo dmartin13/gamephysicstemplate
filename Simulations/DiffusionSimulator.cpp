@@ -10,6 +10,12 @@ DiffusionSimulator::DiffusionSimulator()
 	m_vfMovableObjectFinalPos = Vec3();
 	m_vfRotate = Vec3();
 	// rest to be implemented
+
+	// Initializing the 2D grid
+	temperatureGrid.resize(m);
+	for (int i = 0; i < m; ++i) {
+		temperatureGrid[i].resize(n, 0.0f);
+	}
 }
 
 const char * DiffusionSimulator::getTestCasesStr(){
@@ -17,10 +23,15 @@ const char * DiffusionSimulator::getTestCasesStr(){
 }
 
 void DiffusionSimulator::reset(){
-		m_mouse.x = m_mouse.y = 0;
-		m_trackmouse.x = m_trackmouse.y = 0;
-		m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
+	m_mouse.x = m_mouse.y = 0;
+	m_trackmouse.x = m_trackmouse.y = 0;
+	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
 
+	//for (auto& row : temperatureGrid)
+		//row.clear();
+
+	// Clear the outer vector
+	//temperatureGrid.clear();
 }
 
 void DiffusionSimulator::initUI(DrawingUtilitiesClass * DUC)
@@ -41,9 +52,11 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 	{
 	case 0:
 		cout << "Explicit solver!\n";
+		reset();
 		break;
 	case 1:
 		cout << "Implicit solver!\n";
+		reset();
 		break;
 	default:
 		cout << "Empty Test!\n";
@@ -51,9 +64,40 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 	}
 }
 
-void DiffusionSimulator::diffuseTemperatureExplicit() {
-// to be implemented
+
+void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
+
+	// Compute the diffusion coefficient (D)
+	float D = 0.1f; // Higher = faster spreading (0.1 is good for now)
+
+	// Set initial conditions (e.g., a heat source)
+	temperatureGrid[m / 2][n / 2] = 1.0f;
+
+	// Perform explicit Euler scheme for diffusion
+	for (int step = 0; step < 100; ++step) {
+
+		vector<vector<float>> T_temp = temperatureGrid;
+
+		// Update temperature values using explicit method
+		for (int i = 1; i < m - 1; ++i)
+			for (int j = 1; j < n - 1; ++j)
+				T_temp[i][j] = temperatureGrid[i][j] + D * (temperatureGrid[i + 1][j] + temperatureGrid[i - 1][j] + temperatureGrid[i][j + 1] + temperatureGrid[i][j - 1] - 4 * temperatureGrid[i][j]) * timeStep;
+
+		// Copy updated values back to the original grid
+		temperatureGrid = T_temp;
+
+		// Ensure boundary conditions (temperature is always zero at boundaries)
+		for (int i = 0; i < m; ++i)
+			temperatureGrid[i][0] = temperatureGrid[i][n - 1] = 0.0f;
+		
+		for (int j = 0; j < n; ++j) 
+			temperatureGrid[0][j] = temperatureGrid[m - 1][j] = 0.0f;
+	}
+
+	drawObjects();
 }
+
+
 
 
 void DiffusionSimulator::diffuseTemperatureImplicit() {
@@ -98,7 +142,7 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
 	{
 	case 0:
 		// feel free to change the signature of this function
-		diffuseTemperatureExplicit();
+		diffuseTemperatureExplicit(timeStep);
 		break;
 	case 1:
 		// feel free to change the signature of this function
@@ -109,8 +153,28 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
 
 void DiffusionSimulator::drawObjects()
 {
-	// to be implemented
-	//visualization
+	std::mt19937 eng;
+	std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+	float sphereSize = 0.1f;
+
+	// Iterate through the temperature grid and draw spheres
+	for (size_t i = 0; i < temperatureGrid.size(); ++i) {
+		for (size_t j = 0; j < temperatureGrid[i].size(); ++j) {
+			float temperature = temperatureGrid[i][j];
+
+			// Map temperature to a color (you can adjust this based on your desired color mapping)
+			Vec3 color = Vec3(temperature, 0.0f, 1.0 - temperature);
+
+			// Set up lighting with the determined color
+			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, color);
+
+			// Calculate the position of the sphere based on grid indices
+			Vec3 position(i * sphereSize, j * sphereSize, 0.0f);
+
+			// Draw the sphere
+			DUC->drawSphere(position, Vec3(sphereSize));
+		}
+	}
 }
 
 
