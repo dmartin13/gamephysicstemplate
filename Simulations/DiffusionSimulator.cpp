@@ -27,11 +27,11 @@ void DiffusionSimulator::reset(){
 	m_trackmouse.x = m_trackmouse.y = 0;
 	m_oldtrackmouse.x = m_oldtrackmouse.y = 0;
 
-	//for (auto& row : temperatureGrid)
-		//row.clear();
-
-	// Clear the outer vector
-	//temperatureGrid.clear();
+	// Resetting the grid & heat source
+	vector<vector<float>> T(m, vector<float>(n, 0.0f));
+	temperatureGrid = T;
+	temperatureGrid[m / 2][n / 2] = 5.0f;
+	temperatureGrid[m - 2][n - 2] = 5.0f;
 }
 
 void DiffusionSimulator::initUI(DrawingUtilitiesClass * DUC)
@@ -67,14 +67,15 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 
 void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
 
-	// Compute the diffusion coefficient (D)
+	// Diffusion coefficient (D)
 	float D = 0.1f; // Higher = faster spreading (0.1 is good for now)
 
-	// Set initial conditions (e.g., a heat source)
-	temperatureGrid[m / 2][n / 2] = 1.0f;
+	// Set initial conditions (Heat source)
+	temperatureGrid[m / 2][n / 2] = 5.0f;
+	temperatureGrid[m - 2][n - 2] = 5.0f;
 
 	// Perform explicit Euler scheme for diffusion
-	for (int step = 0; step < 100; ++step) {
+	//for (int step = 0; step < 300; ++step) {
 
 		vector<vector<float>> T_temp = temperatureGrid;
 
@@ -92,7 +93,7 @@ void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
 		
 		for (int j = 0; j < n; ++j) 
 			temperatureGrid[0][j] = temperatureGrid[m - 1][j] = 0.0f;
-	}
+	//}
 
 	drawObjects();
 }
