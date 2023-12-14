@@ -30,12 +30,14 @@ public:
 
 	// Feel free to change the signature of these functions, add arguments, etc.
 	void diffuseTemperatureExplicit(float timeStep);
-	void diffuseTemperatureImplicit();
+	void diffuseTemperatureImplicit(float timeStep);
 	
 	// Define grid parameters (m and n)
 	int m = 16;
 	int n = 16;
 	std::vector<std::vector<float>> temperatureGrid;
+	// Diffusion coefficient (D)
+	float D = 0.1f; // Higher = faster spreading (0.1 is good for now)
 
 private:
 	// Attributes

@@ -67,9 +67,6 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 
 void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
 
-	// Diffusion coefficient (D)
-	float D = 0.1f; // Higher = faster spreading (0.1 is good for now)
-
 	// Set initial conditions (Heat source)
 	temperatureGrid[m / 2][n / 2] = 5.0f;
 	temperatureGrid[m - 2][n - 2] = 5.0f;
@@ -97,37 +94,67 @@ void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
 
 
 
-void DiffusionSimulator::diffuseTemperatureImplicit() {
-	// solve A T = b
+void DiffusionSimulator::diffuseTemperatureImplicit(float timeStep) {
 
-	// This is just an example to show how to work with the PCG solver,
-	const int nx = 5;
-	const int ny = 5;
-	const int nz = 5;
-	const int N = nx * ny * nz;
+	// Set initial conditions (Heat source)
+	temperatureGrid[m / 2][n / 2] = 5.0f;
+	temperatureGrid[m - 2][n - 2] = 5.0f;
 
-	SparseMatrix<Real> A(N);
-	std::vector<Real> b(N);
+	const int nx = temperatureGrid.size();
+	const int ny = temperatureGrid[0].size();
+	const int N = nx * ny;
 
-	// This is the part where you have to assemble the system matrix A and the right-hand side b!
+	SparseMatrix<float> A(N);
+	std::vector<float> b(N);
 
-	// perform solve
-	Real pcg_target_residual = 1e-05;
-	Real pcg_max_iterations = 1000;
-	Real ret_pcg_residual = 1e10;
-	int  ret_pcg_iterations = -1;
+	// Assemble the system matrix A and the right-hand side b
+	for (int i = 1; i < nx - 1; ++i) {
+		for (int j = 1; j < ny - 1; ++j) {
+			int index = i + nx * j;
 
-	SparsePCGSolver<Real> solver;
+			// Assemble the matrix A and vector b here
+			// Modify the following lines based on your implicit diffusion discretization
+
+			// Set the diagonal entry
+			A.set_element(index, index, 1 + 4 * D * timeStep);
+
+			// Set the neighboring entries, adjust the coefficients based on your scheme
+			A.set_element(index, index - 1, -D * timeStep);
+			A.set_element(index, index + 1, -D * timeStep);
+			A.set_element(index, index - nx, -D * timeStep);
+			A.set_element(index, index + nx, -D * timeStep);
+
+			// Set the right-hand side vector
+			b[index] = temperatureGrid[i][j] + D * timeStep * (
+				temperatureGrid[i + 1][j] + temperatureGrid[i - 1][j] +
+				temperatureGrid[i][j + 1] + temperatureGrid[i][j - 1] - 4 * temperatureGrid[i][j]
+				);
+		}
+	}
+
+	// Perform solve
+	float pcg_target_residual = 1e-05;
+	int pcg_max_iterations = 1000;
+	float ret_pcg_residual = 1e10;
+	int ret_pcg_iterations = -1;
+
+	SparsePCGSolver<float> solver;
 	solver.set_solver_parameters(pcg_target_residual, pcg_max_iterations, 0.97, 0.25);
 
-	std::vector<Real> x(N);
-	for (int j = 0; j < N; ++j) { x[j] = 0.; }
+	std::vector<float> x(N, 0.0);
+	solver.solve(A, b, x, ret_pcg_residual, ret_pcg_iterations, 2);
 
-	// preconditioners: 0 off, 1 diagonal, 2 incomplete cholesky
-	solver.solve(A, b, x, ret_pcg_residual, ret_pcg_iterations, 0);
+	// Update the temperatureGrid with the solution
+	for (int i = 1; i < nx - 1; ++i) {
+		for (int j = 1; j < ny - 1; ++j) {
+			int index = i + nx * j;
 
-	// Final step is to extract the grid temperatures from the solution vector x
-	// to be implemented
+			// Extract temperature from solution vector and update temperatureGrid
+			temperatureGrid[i][j] = x[index];
+		}
+	}
+
+	drawObjects();
 }
 
 
@@ -143,7 +170,7 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
 		break;
 	case 1:
 		// feel free to change the signature of this function
-		diffuseTemperatureImplicit();
+		diffuseTemperatureImplicit(timeStep);
 		break;
 	}
 }
