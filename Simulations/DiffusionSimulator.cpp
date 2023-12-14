@@ -74,27 +74,23 @@ void DiffusionSimulator::diffuseTemperatureExplicit(float timeStep) {
 	temperatureGrid[m / 2][n / 2] = 5.0f;
 	temperatureGrid[m - 2][n - 2] = 5.0f;
 
-	// Perform explicit Euler scheme for diffusion
-	//for (int step = 0; step < 300; ++step) {
+	vector<vector<float>> T_temp = temperatureGrid;
 
-		vector<vector<float>> T_temp = temperatureGrid;
+	// Update temperature values using explicit method
+	for (int i = 1; i < m - 1; ++i)
+		for (int j = 1; j < n - 1; ++j)
+			T_temp[i][j] = temperatureGrid[i][j] + D * (temperatureGrid[i + 1][j] + temperatureGrid[i - 1][j] + temperatureGrid[i][j + 1] + temperatureGrid[i][j - 1] - 4 * temperatureGrid[i][j]) * timeStep;
 
-		// Update temperature values using explicit method
-		for (int i = 1; i < m - 1; ++i)
-			for (int j = 1; j < n - 1; ++j)
-				T_temp[i][j] = temperatureGrid[i][j] + D * (temperatureGrid[i + 1][j] + temperatureGrid[i - 1][j] + temperatureGrid[i][j + 1] + temperatureGrid[i][j - 1] - 4 * temperatureGrid[i][j]) * timeStep;
+	// Copy updated values back to the original grid
+	temperatureGrid = T_temp;
 
-		// Copy updated values back to the original grid
-		temperatureGrid = T_temp;
+	// Ensure boundary conditions (temperature is always zero at boundaries)
+	for (int i = 0; i < m; ++i)
+		temperatureGrid[i][0] = temperatureGrid[i][n - 1] = 0.0f;
 
-		// Ensure boundary conditions (temperature is always zero at boundaries)
-		for (int i = 0; i < m; ++i)
-			temperatureGrid[i][0] = temperatureGrid[i][n - 1] = 0.0f;
-		
-		for (int j = 0; j < n; ++j) 
-			temperatureGrid[0][j] = temperatureGrid[m - 1][j] = 0.0f;
-	//}
-
+	for (int j = 0; j < n; ++j)
+		temperatureGrid[0][j] = temperatureGrid[m - 1][j] = 0.0f;
+	
 	drawObjects();
 }
 
@@ -158,6 +154,9 @@ void DiffusionSimulator::drawObjects()
 	std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
 	float sphereSize = 0.1f;
 
+	// Hard-code the first sphere position
+	Vec3 position = Vec3(-0.5, -0.5, 0);
+
 	// Iterate through the temperature grid and draw spheres
 	for (size_t i = 0; i < temperatureGrid.size(); ++i) {
 		for (size_t j = 0; j < temperatureGrid[i].size(); ++j) {
@@ -169,14 +168,20 @@ void DiffusionSimulator::drawObjects()
 			// Set up lighting with the determined color
 			DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, color);
 
-			// Calculate the position of the sphere based on grid indices
-			Vec3 position(i * sphereSize, j * sphereSize, 0.0f);
-
-			// Draw the sphere
+			// Draw the sphere at the current position
 			DUC->drawSphere(position, Vec3(sphereSize));
+
+			// Update the position based on grid indices
+			position.x += sphereSize;  // Adjust based on your grid spacing
 		}
+
+		// Move to the next row in the grid
+		position.x = -0.5;
+		position.y += sphereSize;  // Adjust based on your grid spacing
 	}
 }
+
+
 
 
 void DiffusionSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext)
