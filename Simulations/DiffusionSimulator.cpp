@@ -217,16 +217,44 @@ void DiffusionSimulator::simulateTimestep(float timeStep) {
 }
 
 void DiffusionSimulator::drawObjects() {
+    // double minVal = 100000000.0;
+    // double maxVal = -100000000.0;
+    auto sphereSize = 0.1;
+    auto halfDomainSizeX = T.GetN() * sphereSize * 0.5;
+    auto halfDomainSizeY = T.GetM() * sphereSize * 0.5;
+
     for (unsigned int y = 0; y < T.GetM(); ++y) {
         for (unsigned int x = 0; x < T.GetN(); ++x) {
+
+            // if (T.GetValueAt(x, y) < minVal) {
+            //   minVal = T.GetValueAt(x, y);
+            // }
+            // if (T.GetValueAt(x, y) > maxVal) {
+            //   maxVal = T.GetValueAt(x, y);
+            // }
+
             // calculate color
             // auto color = Vec3(1., (1. + T.GetValueAt(x, y)) / 2., (1. +
             // T.GetValueAt(x, y)) / 2.);
-            auto color = Vec3(T.GetValueAt(x, y), 0.0f, 1.0 - T.GetValueAt(x, y));
-            DUC->setUpLighting(Vec3(), color, 100., color);
-            DUC->drawSphere(Vec3(x, y, 0), Vec3(1, 1, 1));
+
+            // auto color = Vec3(T.GetValueAt(x, y), 0.0f, 1.0 - T.GetValueAt(x, y));
+
+            // remap values from (-1, 1) to (0, 1)
+            auto xP = ((-T.GetValueAt(x, y)) / 2.) + 0.5;
+            auto yP = (xP - 0.5) * (xP - 0.5) * 4.;
+            auto red = abs((xP - 0.5) * 2.) * yP;
+            auto green = (1. - xP) * yP;
+            auto blue = (1. - xP) * yP;
+
+            auto color = Vec3(red, green, blue);
+
+            DUC->setUpLighting(Vec3(), Vec3(1, 1, 1), 15., color);
+            auto pos = Vec3(-halfDomainSizeX + x * sphereSize,
+                -halfDomainSizeY + y * sphereSize, 0);
+            DUC->drawSphere(pos, Vec3(sphereSize, sphereSize, sphereSize));
         }
     }
+    // std::cout << "minVal: " << minVal << ", maxVal: " << maxVal << std::endl;
 }
 
 void DiffusionSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateContext) {
