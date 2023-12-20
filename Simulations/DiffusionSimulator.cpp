@@ -23,6 +23,23 @@ void Grid::SetValueAt(double value, unsigned int x, unsigned int y) {
 }
 
 void DiffusionSimulator::setUpInitialScenario() {
+    switch (scenario) {
+    case 0:
+        setUpInitialScenarioPlateu();
+        break;
+    case 1:
+        setUpInitialScenarioRandom1();
+        break;
+    case 2:
+        setUpInitialScenarioRandom2();
+        break;
+    default:
+        setUpInitialScenarioPlateu();
+        break;
+    }
+}
+
+void DiffusionSimulator::setUpInitialScenarioPlateu() {
     // this (should) create a flat area with a plateau in the middle
     int plateauSizeY = T.GetM() / 2;
     int plateauSizeX = T.GetN() / 2;
@@ -46,6 +63,57 @@ void DiffusionSimulator::setUpInitialScenario() {
     }
 }
 
+void DiffusionSimulator::setUpInitialScenarioRandom1() {
+    auto seed = 123;
+    auto max = 0.;
+    auto min = 1.;
+    for (int y = 0; y < T.GetM(); ++y) {
+        for (int x = 0; x < T.GetN(); ++x) {
+            // boundaries
+            if (x == 0 || x == (T.GetN() - 1) || y == 0 || y == (T.GetM() - 1)) {
+                T.SetValueAt(0, x, y);
+                continue;
+            }
+            std::srand(seed * (x + 1) * (y + 1));
+            auto val =
+                static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX);
+            T.SetValueAt(val, x, y);
+            // std::cout << "value at (" << x << ", " << y << "): " << T.GetValueAt(x,
+            // y) << std::endl;
+            if (val < min) {
+                min = val;
+            }
+            if (val > max) {
+                max = val;
+            }
+        }
+    }
+    // remap values between -1 and 1
+    auto scaleFactor = (1. / max) * 2.;
+    for (int y = 1; y < T.GetM() - 1; ++y) {
+        for (int x = 1; x < T.GetN() - 1; ++x) {
+            T.SetValueAt(T.GetValueAt(x, y) * scaleFactor - 1., x, y);
+        }
+    }
+}
+
+void DiffusionSimulator::setUpInitialScenarioRandom2() {
+    // std::random_device rd;
+    std::mt19937 gen(0);
+    std::uniform_real_distribution<> distr(-1., 1.);
+
+    for (int y = 0; y < T.GetM(); ++y) {
+        for (int x = 0; x < T.GetN(); ++x) {
+            // boundaries
+            if (x == 0 || x == (T.GetN() - 1) || y == 0 || y == (T.GetM() - 1)) {
+                T.SetValueAt(0, x, y);
+                continue;
+            }
+            T.SetValueAt(distr(gen), x, y);
+        }
+    }
+}
+
 void Grid::Resize(unsigned int m, unsigned int n) {
     m_ = m;
     n_ = n;
@@ -65,6 +133,10 @@ const char* DiffusionSimulator::getTestCasesStr() {
     return "Explicit_solver, Implicit_solver";
 }
 
+const char* DiffusionSimulator::getIntegratorStr() {
+    return "Plateau,Waves,Random";
+}
+
 void DiffusionSimulator::reset() {
     m_mouse.x = m_mouse.y = 0;
     m_trackmouse.x = m_trackmouse.y = 0;
@@ -73,10 +145,13 @@ void DiffusionSimulator::reset() {
 
 void DiffusionSimulator::initUI(DrawingUtilitiesClass* DUC) {
     this->DUC = DUC;
+    TwType TW_TYPE_SCENARIO =
+        TwDefineEnumFromString("Scenario", getIntegratorStr());
 
+    TwAddVarRW(DUC->g_pTweakBar, "Scenario", TW_TYPE_SCENARIO, &scenario, "");
     TwAddVarRW(DUC->g_pTweakBar, "M", TW_TYPE_UINT32, &m, "");
     TwAddVarRW(DUC->g_pTweakBar, "N", TW_TYPE_UINT32, &n, "");
-    TwAddVarRW(DUC->g_pTweakBar, "Alpha", TW_TYPE_FLOAT, &alpha,
+    TwAddVarRW(DUC->g_pTweakBar, "Alpha", TW_TYPE_DOUBLE, &alpha,
         "step=0.1 min=0.0");
 
     setUpInitialScenario();
@@ -133,6 +208,11 @@ void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep) {
             // update step
             T.SetValueAt(
                 t_n + factor * (t_n_xp + t_n_xm + t_n_yp + t_n_ym - (4 * t_n)), x, y);
+
+            // sanity check so that we do not modify old values
+            if (oldValues.GetValueAt(x, y) != t_n) {
+                std::cout << "sanity check failed" << std::endl;
+            }
         }
     }
 }
@@ -203,6 +283,12 @@ void DiffusionSimulator::simulateTimestep(float timeStep) {
         setUpInitialScenario();
     }
 
+    if (scenario != scenarioOld) {
+        T.Resize(m, n);
+        setUpInitialScenario();
+        scenarioOld = scenario;
+    }
+
     // update current setup for each frame
     switch (m_iTestCase) {
     case 0:
@@ -237,7 +323,8 @@ void DiffusionSimulator::drawObjects() {
             // auto color = Vec3(1., (1. + T.GetValueAt(x, y)) / 2., (1. +
             // T.GetValueAt(x, y)) / 2.);
 
-            // auto color = Vec3(T.GetValueAt(x, y), 0.0f, 1.0 - T.GetValueAt(x, y));
+            // auto color = Vec3(T.GetValueAt(x, y), 0.0f, 1.0 - T.GetValueAt(x,
+            // y));
 
             // remap values from (-1, 1) to (0, 1)
             auto xP = ((-T.GetValueAt(x, y)) / 2.) + 0.5;

@@ -29,6 +29,7 @@ public:
 
 	// Functions
 	const char* getTestCasesStr();
+	const char* getIntegratorStr();
 	void initUI(DrawingUtilitiesClass* DUC);
 	void reset();
 	void drawFrame(ID3D11DeviceContext* pd3dImmediateContext);
@@ -45,6 +46,9 @@ public:
 	void diffuseTemperatureImplicit(double timeStep);
 
 	void setUpInitialScenario();
+	void setUpInitialScenarioPlateu();
+	void setUpInitialScenarioRandom1();
+	void setUpInitialScenarioRandom2();
 
 private:
 	// Attributes
@@ -57,7 +61,9 @@ private:
 	Grid T;
 	int m{ 16 };
 	int n{ 16 };
-	double alpha{ 0.1 };
+	double alpha = 0.3;
+	int scenario = 0;
+	int scenarioOld = 0;
 };
 
 #endif
