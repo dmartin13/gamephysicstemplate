@@ -145,9 +145,12 @@ void DiffusionSimulator::reset() {
 
 void DiffusionSimulator::initUI(DrawingUtilitiesClass* DUC) {
     this->DUC = DUC;
+
     TwType TW_TYPE_SCENARIO =
         TwDefineEnumFromString("Scenario", getIntegratorStr());
 
+    TwAddVarRW(DUC->g_pTweakBar, "Activate Unstable Parameters", TW_TYPE_BOOLCPP,
+        &overwriteParameters, "");
     TwAddVarRW(DUC->g_pTweakBar, "Scenario", TW_TYPE_SCENARIO, &scenario, "");
     TwAddVarRW(DUC->g_pTweakBar, "M", TW_TYPE_UINT32, &m, "");
     TwAddVarRW(DUC->g_pTweakBar, "N", TW_TYPE_UINT32, &n, "");
@@ -176,9 +179,25 @@ void DiffusionSimulator::notifyCaseChanged(int testCase) {
 }
 
 void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep) {
+
+    double alphaToUse = alpha;
+    double timeStepToUse = timeStep;
+    if (overwriteParameters) {
+        alphaToUse = unstableAlpha;
+        timeStepToUse = unstableTimestep;
+    }
+
     // this should use the default copy constructor to create a copy of the
     // current values
     auto oldValues(T);
+
+    // sanity check so that the above line indeed creates a copy and we do not
+    // modify old values
+    // for (size_t i = 0; i < T.GetM() * T.GetN(); ++i) {
+    //   if (&T.GetValues()[i] == &oldValues.GetValues()[i]) {
+    //     std::cout << "sanity check failed" << std::endl;
+    //   }
+    // }
 
     // we start with the second element and iterate to the second last to ensure
     // the boundaries stay 0
@@ -191,7 +210,7 @@ void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep) {
 
             // note: In our simulator the grid points are equally spaced with a
             // distance of 1. Therefore h = h^2 = 1
-            auto factor = (alpha * timeStep) /* /h^2 */;
+            auto factor = (alphaToUse * timeStepToUse) /* /h^2 */;
 
             // T^n_(i+1,j)
             auto t_n_xp = oldValues.GetValueAt(x + 1, y);
@@ -208,16 +227,19 @@ void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep) {
             // update step
             T.SetValueAt(
                 t_n + factor * (t_n_xp + t_n_xm + t_n_yp + t_n_ym - (4 * t_n)), x, y);
-
-            // sanity check so that we do not modify old values
-            if (oldValues.GetValueAt(x, y) != t_n) {
-                std::cout << "sanity check failed" << std::endl;
-            }
         }
     }
 }
 
 void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep) {
+
+    double alphaToUse = alpha;
+    double timeStepToUse = timeStep;
+    if (overwriteParameters) {
+        alphaToUse = unstableAlpha;
+        timeStepToUse = unstableTimestep;
+    }
+
     // solve A T = b
 
     // This is just an example to show how to work with the PCG solver,
@@ -242,15 +264,15 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep) {
             size_t idx = y * nx + x;
 
             // set leftmost element (j-1)
-            A.set_element(idx, idx - nx, -alpha * timeStep);
+            A.set_element(idx, idx - nx, -alphaToUse * timeStepToUse);
             // element directly left (i-1)
-            A.set_element(idx, idx - 1, -alpha * timeStep);
+            A.set_element(idx, idx - 1, -alphaToUse * timeStepToUse);
             // the diagonal value
-            A.set_element(idx, idx, 1.0 + 4.0 * alpha * timeStep);
+            A.set_element(idx, idx, 1.0 + 4.0 * alphaToUse * timeStepToUse);
             // element directly right (i+1)
-            A.set_element(idx, idx + 1, -alpha * timeStep);
+            A.set_element(idx, idx + 1, -alphaToUse * timeStepToUse);
             // set rightmost element (j+1)
-            A.set_element(idx, idx + nx, -alpha * timeStep);
+            A.set_element(idx, idx + nx, -alphaToUse * timeStepToUse);
         }
     }
 
@@ -277,6 +299,20 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep) {
 }
 
 void DiffusionSimulator::simulateTimestep(float timeStep) {
+
+    if (overwriteParameters && !unstableParametersNotify) {
+        std::cout << "Using unstable parameters for Alpha=" << unstableAlpha
+            << " and TimeStep=" << unstableTimestep
+            << " for which the explicit solver is unstable, but the implicit "
+            "solver is stable"
+            << std::endl;
+        unstableParametersNotify = true;
+    }
+    if (!overwriteParameters && unstableParametersNotify) {
+        std::cout << "Using parameters from UI for Alpha and Timestep" << std::endl;
+        unstableParametersNotify = false;
+    }
+
     // check if grid size changed
     if (m != T.GetM() || n != T.GetN()) {
         T.Resize(m, n);

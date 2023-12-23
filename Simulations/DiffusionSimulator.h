@@ -61,9 +61,13 @@ private:
 	Grid T;
 	int m{ 16 };
 	int n{ 16 };
-	double alpha = 0.3;
-	int scenario = 0;
-	int scenarioOld = 0;
+	double alpha{ 0.3 };
+	int scenario{ 0 };
+	int scenarioOld{ 0 };
+	bool overwriteParameters{ false };
+	double unstableAlpha{ 1.0 };
+	double unstableTimestep{ 0.5 };
+	bool unstableParametersNotify{ false };
 };
 
 #endif
