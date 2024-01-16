@@ -1,5 +1,24 @@
 #include "RigidBodySystemSimulator.h"
 
+void RigidBodySystemSimulator::createSpringMesh(size_t m, size_t n,
+    double spacing, Vec3 pos,
+    double scale) {
+    for (size_t i = 0; i < m; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            bool fixed =
+                (i == 0 || j == 0 || i == (m - 1) || j == (n - 1)) ? true : false;
+            size_t rb = addRigidBody(pos + Vec3(i * spacing, 0, j * spacing),
+                Vec3(scale, scale, scale), 1, fixed);
+            if (j > 0) {
+                addSpring(rb - 1, rb, spacing);
+            }
+            if (i > 0) {
+                addSpring(rb - n, rb, spacing);
+            }
+        }
+    }
+}
+
 Mat4 RigidBodySystemSimulator::calcWorldMatrix(RigidBody& rb) {
     const Mat4 scaleMat = Mat4(rb.width, 0, 0, 0, 0, rb.height, 0, 0, 0, 0,
         rb.depth, 0, 0, 0, 0, 1);
@@ -13,14 +32,17 @@ RigidBodySystemSimulator::RigidBodySystemSimulator() {
     m_iTestCase = 0;
 
     _mass = 1.f;
-    _stiffness = 1.f;
+    _stiffness = 100.f;
     _damping = 0.f;
     _externalForce = Vec3(0.f, 0.f, 0.f);
+    _gravity = 0;
+    _damping = 0;
 
     _mouse.x = _mouse.y = 0;
     _trackmouse.x = _trackmouse.y = 0;
     _oldtrackmouse.x = _oldtrackmouse.y = 0;
 }
+
 const char* RigidBodySystemSimulator::getTestCasesStr() {
     return "Demo1,Demo2,Demo3";
 }
@@ -29,12 +51,19 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     this->DUC = DUC;
     switch (m_iTestCase) {
     case 0: {
+        reset();
         size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
         size_t rb1 = addRigidBody(Vec3(1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
         addSpring(rb0, rb1, 1.0);
     } break;
-    case 1:
-        break;
+    case 1: {
+        reset();
+        createSpringMesh(5, 5, 0.1, Vec3(0, 0, 0), 0.05);
+
+        size_t anotherRB =
+            addRigidBody(Vec3(0.25, 0.5, 0.25), Vec3(0.1, 0.1, 0.1), 10);
+        setVelocityOf(anotherRB, Vec3(0, -0.5, 0));
+    } break;
     case 2:
         TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &_gravity,
             "min=0.0 step=0.1");
@@ -53,6 +82,7 @@ void RigidBodySystemSimulator::reset() {
 
     _rigidBodies.clear();
     _constRigidBodies.clear();
+    _springs.clear();
 }
 
 void RigidBodySystemSimulator::drawFrame(
@@ -118,6 +148,9 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
     for (auto& rb : _rigidBodies) {
+        if (rb.fixed) {
+            continue;
+        }
         // position and velocity update (Euler Step)
         rb.position += timeStep * rb.linearVelocity;
         rb.linearVelocity +=
@@ -273,11 +306,17 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force) {
 
 size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size,
     int mass) {
-    return addRigidBodyInternal(position, size, mass, _rigidBodies);
+    return addRigidBodyInternal(position, size, mass, _rigidBodies, false);
+}
+
+size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size,
+    int mass, bool fixed) {
+    return addRigidBodyInternal(position, size, mass, _rigidBodies, fixed);
 }
 
 size_t RigidBodySystemSimulator::addRigidBodyInternal(
-    Vec3 position, Vec3 size, int mass, std::vector<RigidBody>& storage) {
+    Vec3 position, Vec3 size, int mass, std::vector<RigidBody>& storage,
+    bool fixed) {
     RigidBody rb;
 
     // init values from arguments
@@ -308,7 +347,7 @@ size_t RigidBodySystemSimulator::addRigidBodyInternal(
         Mat4(iit0, 0., 0., 0., 0, iit1, 0., 0., 0., 0., iit2, 0., 0., 0., 0., 0.);
 
     rb.worldMatrix = calcWorldMatrix(rb);
-    rb.fixed = false;
+    rb.fixed = fixed;
 
     storage.push_back(rb);
 
@@ -365,8 +404,8 @@ void RigidBodySystemSimulator::computeForces(
 }
 
 void RigidBodySystemSimulator::applyDamping(
-    std::vector<MassPoint>& massPoints) {
-    for (auto& p : massPoints) {
-        p._force -= _damping * p._velocity;
+    std::vector<RigidBody>& rigidBodies) {
+    for (auto& rb : rigidBodies) {
+        rb.force -= _damping * rb.linearVelocity;
     }
 }

@@ -5,21 +5,6 @@
 
 #define TESTCASEUSEDTORUNTEST 2
 
-struct MassPoint {
-
-    MassPoint(Vec3 position, Vec3 velocity, bool isFixed)
-        : _position(position), _velocity(velocity), _isFixed(isFixed) {
-        _force = Vec3(0, 0, 0);
-    }
-
-    void clearForce() { _force = Vec3(0, 0, 0); }
-
-    Vec3 _position;
-    Vec3 _velocity;
-    Vec3 _force;
-    bool _isFixed;
-};
-
 struct Spring {
 
     Spring(int masspoint1, int masspoint2, float initialLength)
@@ -74,8 +59,9 @@ public:
     Vec3 getAngularVelocityOfRigidBody(int i);
     void applyForceOnBody(int i, Vec3 loc, Vec3 force);
     size_t addRigidBody(Vec3 position, Vec3 size, int mass);
+    size_t addRigidBody(Vec3 position, Vec3 size, int mass, bool fixed);
     size_t addRigidBodyInternal(Vec3 position, Vec3 size, int mass,
-        std::vector<RigidBody>& storage);
+        std::vector<RigidBody>& storage, bool fixed);
     void setOrientationOf(int i, Quat orientation);
     void setVelocityOf(int i, Vec3 velocity);
     Mat4 calcWorldMatrix(RigidBody& rb);
@@ -89,10 +75,12 @@ public:
     void addSpring(int masspoint1, int masspoint2, float initialLength);
     int getNumberOfSprings();
     void computeForces(std::vector<RigidBody>& rigidBodies);
-    void applyDamping(std::vector<MassPoint>& massPoints);
+    void applyDamping(std::vector<RigidBody>& rigidBodies);
 
     // helpers
     float degToRad(float degree);
+    void createSpringMesh(size_t m, size_t n, double spacing, Vec3 pos,
+        double scale);
 
 private:
     // UI Attributes
