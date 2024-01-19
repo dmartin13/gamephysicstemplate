@@ -29,9 +29,30 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     this->DUC = DUC;
     switch (m_iTestCase) {
     case 0: {
-        size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
-        size_t rb1 = addRigidBody(Vec3(1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
-        addSpring(rb0, rb1, 1.0);
+        //size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
+        //size_t rb1 = addRigidBody(Vec3(1, 0, 0), Vec3(0.5, 0.25, 0.25), 1);
+        //addSpring(rb0, rb1, 1.0);
+
+        reset();
+        std::mt19937 eng;
+        std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+        std::uniform_real_distribution<float> randVel(-0.5f, 0.5f);
+
+        const int rows = 2;
+        const int cols = 2;
+        for (int i = 0; i < rows; ++i)
+        {
+            for (int j = 0; j < cols; ++j)
+            {
+                size_t rb = addRigidBody(randPos(eng), Vec3(0.5, 0.25, 0.25), 1);
+
+                if (j < cols - 1)
+                    addSpring(i * cols + j, i * cols + j + 1, 1.0);
+
+                if (i < rows - 1)
+                    addSpring(i * cols + j, (i + 1) * cols + j, 1.0);
+            }
+        }
     } break;
     case 1:
         break;
@@ -53,6 +74,7 @@ void RigidBodySystemSimulator::reset() {
 
     _rigidBodies.clear();
     _constRigidBodies.clear();
+    _springs.clear();
 }
 
 void RigidBodySystemSimulator::drawFrame(
