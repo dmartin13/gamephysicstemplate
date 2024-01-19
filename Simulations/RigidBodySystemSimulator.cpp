@@ -34,25 +34,8 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         //addSpring(rb0, rb1, 1.0);
 
         reset();
-        std::mt19937 eng;
-        std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
-        std::uniform_real_distribution<float> randVel(-0.5f, 0.5f);
+        createGrid(2, 3);
 
-        const int rows = 2;
-        const int cols = 2;
-        for (int i = 0; i < rows; ++i)
-        {
-            for (int j = 0; j < cols; ++j)
-            {
-                size_t rb = addRigidBody(randPos(eng), Vec3(0.5, 0.25, 0.25), 1);
-
-                if (j < cols - 1)
-                    addSpring(i * cols + j, i * cols + j + 1, 1.0);
-
-                if (i < rows - 1)
-                    addSpring(i * cols + j, (i + 1) * cols + j, 1.0);
-            }
-        }
     } break;
     case 1:
         break;
@@ -336,6 +319,27 @@ size_t RigidBodySystemSimulator::addRigidBodyInternal(
 
     return storage.size() - 1;
 }
+
+void RigidBodySystemSimulator::createGrid(size_t rows, size_t cols) {
+    std::mt19937 eng;
+    std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+    std::uniform_real_distribution<float> randVel(-0.5f, 0.5f);
+
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            size_t rb = addRigidBody(randPos(eng), Vec3(0.5, 0.25, 0.25), 1);
+
+            if (j < cols - 1)
+                addSpring(i * cols + j, i * cols + j + 1, 1.0);
+
+            if (i < rows - 1)
+                addSpring(i * cols + j, (i + 1) * cols + j, 1.0);
+        }
+    }
+}
+
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation) {
     // make sure we use unit length orientation

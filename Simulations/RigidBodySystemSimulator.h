@@ -93,6 +93,7 @@ public:
 
     // helpers
     float degToRad(float degree);
+    void createGrid(size_t rows, size_t columns);
 
 private:
     // UI Attributes
