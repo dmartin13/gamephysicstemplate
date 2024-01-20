@@ -16,7 +16,7 @@ struct CollisionInfo{
 // tool data structures/functions called by the collision detection method, you can ignore the details here
 namespace collisionTools{
 	struct Projection{
-		float min, max;
+		float min, max, radius;
 	};
 
 
@@ -157,6 +157,26 @@ namespace collisionTools{
 		return projection;
 	}
 
+	inline Projection projectSphere(const XMMATRIX& obj2World, XMVECTOR axis, float radius) {
+		XMVECTOR center = XMVector3Transform(XMVectorZero(), obj2World);
+		float centerProjection = XMVectorGetX(XMVector3Dot(center, axis));
+		Projection projection;
+		projection.min = centerProjection - radius;
+		projection.max = centerProjection + radius;
+		projection.radius = radius;
+		return projection;
+	}
+
+	inline Projection project(const XMMATRIX& obj2World, XMVECTOR axis, float radius) {
+		if (radius > 0.0f) {
+			return projectSphere(obj2World, axis, radius);
+		}
+		else {
+			return project(obj2World, axis);
+		}
+	}
+
+
 	inline bool overlap(Projection p1, Projection p2)
 	{
 		return !((p1.max > p2.max && p1.min > p2.max) || (p2.max > p1.max && p2.min > p1.max));
@@ -240,8 +260,56 @@ namespace collisionTools{
 		return vertex;
 	}
 
+	// Helper function to find the closest point on AABB to a given point
+	inline XMVECTOR closestPointOnAABB(const XMMATRIX& boxWorld, XMVECTOR point)
+	{
+		using namespace collisionTools;
 
-	inline CollisionInfo checkCollisionSATHelper(const XMMATRIX& obj2World_A, const XMMATRIX& obj2World_B, XMVECTOR size_A, XMVECTOR size_B)
+		// Transform point to local space of the box
+		XMMATRIX invBoxWorld = XMMatrixInverse(nullptr, boxWorld);
+		XMVECTOR localPoint = XMVector3Transform(point, invBoxWorld);
+
+		// Clamp each coordinate to the box extents
+		XMVECTOR clampedPoint = XMVectorClamp(localPoint, XMVectorSet(-0.5f, -0.5f, -0.5f, 0.0f), XMVectorSet(0.5f, 0.5f, 0.5f, 0.0f));
+
+		// Transform the clamped point back to world space
+		return XMVector3Transform(clampedPoint, boxWorld);
+	}
+
+	// Function to check sphere-AABB collision
+	inline CollisionInfo checkSphereAABB(const XMMATRIX& sphereWorld, const XMMATRIX& boxWorld, XMVECTOR sphereRadius)
+	{
+		using namespace collisionTools;
+
+		CollisionInfo info;
+		info.isValid = false;
+
+		XMVECTOR sphereCenter = XMVector3Transform(XMVectorZero(), sphereWorld);
+
+		// Find the closest point on the box to the sphere
+		XMVECTOR closestPoint = closestPointOnAABB(boxWorld, sphereCenter);
+
+		// Calculate the vector from the sphere center to the closest point
+		XMVECTOR toCenter = sphereCenter - closestPoint;
+
+		// Check if the distance squared is less than the sphere radius squared
+		float distanceSquared = XMVectorGetX(XMVector3Dot(toCenter, toCenter));
+		float radiusSquared = XMVectorGetX(sphereRadius) * XMVectorGetX(sphereRadius);
+
+		if (distanceSquared <= radiusSquared)
+		{
+			// Collision detected
+			info.isValid = true;
+			info.collisionPointWorld = closestPoint;
+			info.depth = XMVectorGetX(sphereRadius) - sqrt(distanceSquared);
+			info.normalWorld = XMVector3Normalize(-toCenter);
+		}
+
+		return info;
+	}
+
+
+	inline CollisionInfo checkCollisionSATHelper(const XMMATRIX& obj2World_A, const XMMATRIX& obj2World_B, XMVECTOR size_A, XMVECTOR size_B, bool isSphere_A = false, bool isSphere_B = false)
 	{
 		CollisionInfo info;
 		info.isValid = false;
@@ -252,14 +320,28 @@ namespace collisionTools{
 		int fromWhere = -1;
 		bool bestSingleAxis = false;
 		XMVECTOR toCenter = getVectorConnnectingCenters(obj2World_A, obj2World_B);
-		std::vector<XMVECTOR> axes1 = getAxisNormalToFaces(obj2World_A);
-		std::vector<XMVECTOR> axes2 = getAxisNormalToFaces(obj2World_B);
+		std::vector<XMVECTOR> axes1 = isSphere_A ? getAxisNormalToFaces(obj2World_A) : getAxisNormalToFaces(obj2World_A);
+		std::vector<XMVECTOR> axes2 = isSphere_B ? getAxisNormalToFaces(obj2World_B) : getAxisNormalToFaces(obj2World_B);
 		std::vector<XMVECTOR> axes3 = getPairOfEdges(obj2World_A, obj2World_B);
+
 		// loop over the axes1
 		for (int i = 0; i < axes1.size(); i++) {
 			// project both shapes onto the axis
-			Projection p1 = project(obj2World_A, axes1[i]);
-			Projection p2 = project(obj2World_B, axes1[i]);
+			Projection p1, p2;
+			if (isSphere_A) {
+				p1 = projectSphere(obj2World_A, axes1[i], 0.05);
+			}
+			else {
+				p1 = project(obj2World_A, axes1[i]);
+			}
+
+			if (isSphere_B) {
+				p2 = projectSphere(obj2World_B, axes1[i], 0.05);
+			}
+			else {
+				p2 = project(obj2World_B, axes1[i]);
+			}
+
 			// do the projections overlap?
 			if (!overlap(p1, p2)) {
 				// then we can guarantee that the shapes do not overlap
@@ -278,6 +360,14 @@ namespace collisionTools{
 				}
 			}
 		}
+
+		if (isSphere_A && !isSphere_B) {
+			return checkSphereAABB(obj2World_A, obj2World_B, size_A);
+		}
+		else if (!isSphere_A && isSphere_B) {
+			return checkSphereAABB(obj2World_B, obj2World_A, size_B);
+		}
+
 		// loop over the axes2
 		for (int i = 0; i < axes2.size(); i++) {
 			// project both shapes onto the axis
@@ -390,14 +480,16 @@ namespace collisionTools{
 obj2World_A, the transfer matrix from object space of A to the world space
 obj2World_B, the transfer matrix from object space of B to the world space
 */
-inline CollisionInfo checkCollisionSAT(GamePhysics::Mat4& obj2World_A, GamePhysics::Mat4& obj2World_B) {
+inline CollisionInfo checkCollisionSAT(GamePhysics::Mat4& obj2World_A, GamePhysics::Mat4& obj2World_B, bool isSphere_A = false, bool isSphere_B = false) {
 	using namespace collisionTools;
 	XMMATRIX MatA = obj2World_A.toDirectXMatrix(), MatB = obj2World_B.toDirectXMatrix();
 	XMVECTOR calSizeA = getBoxSize(MatA);
 	XMVECTOR calSizeB = getBoxSize(MatB);
-	
-	return checkCollisionSATHelper(MatA, MatB, calSizeA, calSizeB);
+
+	// Determine if the shapes are spheres or boxes based on the function parameters
+	return checkCollisionSATHelper(MatA, MatB, calSizeA, calSizeB, isSphere_A, isSphere_B);
 }
+
 
 // example of using the checkCollisionSAT function
 inline void testCheckCollision(int caseid){
