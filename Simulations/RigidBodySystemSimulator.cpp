@@ -65,10 +65,13 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         setVelocityOf(anotherRB, Vec3(0, -0.5, 0));
     } break;
     case 2:
-        TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &_gravity,
-            "min=0.0 step=0.1");
-        TwAddVarRW(DUC->g_pTweakBar, "C Factor", TW_TYPE_FLOAT, &_c,
-            "min=0.0 max=1.0 step=0.1");
+        //TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &_gravity,
+        //    "min=0.0 step=0.1");
+        //TwAddVarRW(DUC->g_pTweakBar, "C Factor", TW_TYPE_FLOAT, &_c,
+        //    "min=0.0 max=1.0 step=0.1");
+
+        reset();
+        createGrid(2, 3);
         break;
     default:
         break;
@@ -90,7 +93,10 @@ void RigidBodySystemSimulator::drawFrame(
     DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100,
         0.6 * Vec3(1.f, 1.f, 1.f));
     for (const auto& rb : _rigidBodies) {
-        DUC->drawRigidBody(rb.worldMatrix);
+        if (rb.isSphere)
+            DUC->drawSphere(rb.position, Vec3(0.05f));
+        else
+            DUC->drawRigidBody(rb.worldMatrix);
     }
     for (const auto& s : _springs) {
         DUC->beginLine();
@@ -183,18 +189,44 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
         rb.worldMatrix = calcWorldMatrix(rb);
     }
 
-    // check collisions. Check each rigibody against each other
+    // check collisions. Check each rigid body against each other
     if (_rigidBodies.size() >= 2) {
         for (int i = 0; i < _rigidBodies.size(); ++i) {
             for (int j = i + 1; j < _rigidBodies.size(); ++j) {
-                CollisionInfo colInfo = checkCollisionSAT(_rigidBodies[i].worldMatrix,
-                    _rigidBodies[j].worldMatrix);
-                if (colInfo.isValid) {
-                    calculateImpulse(colInfo, _rigidBodies[i], _rigidBodies[j]);
+                if (!_rigidBodies[i].isSphere && !_rigidBodies[j].isSphere) {
+                    CollisionInfo colInfo = checkCollisionSAT(_rigidBodies[i].worldMatrix,
+                        _rigidBodies[j].worldMatrix);
+                    if (colInfo.isValid) {
+                        calculateImpulse(colInfo, _rigidBodies[i], _rigidBodies[j]);
+                    }
+                }
+                else if (_rigidBodies[i].isSphere && !_rigidBodies[j].isSphere) {
+                    CollisionInfo colInfo = checkCollisionSAT(_rigidBodies[i].worldMatrix,
+                        _rigidBodies[j].worldMatrix, _rigidBodies[i].isSphere, _rigidBodies[j].isSphere);
+                    if (colInfo.isValid) {
+                        calculateImpulse(colInfo, _rigidBodies[i], _rigidBodies[j]);
+                    }
+                }
+                else if (!_rigidBodies[i].isSphere && _rigidBodies[j].isSphere) {
+                    CollisionInfo colInfo = checkCollisionSAT(_rigidBodies[i].worldMatrix,
+                        _rigidBodies[j].worldMatrix, _rigidBodies[i].isSphere, _rigidBodies[j].isSphere);
+                    if (colInfo.isValid) {
+                        // Swap the order of bodies when calculating impulse for sphere-box collision
+                        calculateImpulse(colInfo, _rigidBodies[j], _rigidBodies[i]);
+                    }
+                }
+                else {
+                    // Both are spheres
+                    CollisionInfo colInfo = checkCollisionSAT(_rigidBodies[i].worldMatrix,
+                        _rigidBodies[j].worldMatrix, _rigidBodies[i].isSphere, _rigidBodies[j].isSphere);
+                    if (colInfo.isValid) {
+                        calculateImpulse(colInfo, _rigidBodies[i], _rigidBodies[j]);
+                    }
                 }
             }
         }
     }
+
 
     // check floor collisions. Check each rigibody against const rigid bodies
     if (_constRigidBodies.size() > 0) {
@@ -208,6 +240,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
             }
         }
     }
+
+
 
     // force computation of springs
     computeForces(_rigidBodies);
@@ -304,19 +338,13 @@ void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force) {
     _rigidBodies[i].force += force;
 }
 
-size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size,
-    int mass) {
-    return addRigidBodyInternal(position, size, mass, _rigidBodies, false);
-}
-
-size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size,
-    int mass, bool fixed) {
-    return addRigidBodyInternal(position, size, mass, _rigidBodies, fixed);
+size_t RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass, bool fixed, bool isSphere) {
+    return addRigidBodyInternal(position, size, mass, _rigidBodies, fixed, isSphere);
 }
 
 size_t RigidBodySystemSimulator::addRigidBodyInternal(
-    Vec3 position, Vec3 size, int mass, std::vector<RigidBody>& storage,
-    bool fixed) {
+    Vec3 position, Vec3 size, int mass, std::vector<RigidBody>& storage, bool fixed, bool isSphere) {
+
     RigidBody rb;
 
     // init values from arguments
@@ -325,6 +353,9 @@ size_t RigidBodySystemSimulator::addRigidBodyInternal(
     rb.width = size.x;
     rb.height = size.y;
     rb.depth = size.z;
+
+    // If it is a sphere
+     rb.isSphere = isSphere;
 
     // default inits
     rb.linearVelocity = Vec3();
@@ -353,6 +384,31 @@ size_t RigidBodySystemSimulator::addRigidBodyInternal(
 
     return storage.size() - 1;
 }
+
+void RigidBodySystemSimulator::createGrid(size_t rows, size_t cols) {
+    std::mt19937 eng;
+    std::uniform_real_distribution<float> randPos(-0.5f, 0.5f);
+    std::uniform_real_distribution<float> randVel(-0.5f, 0.5f);
+
+    // To create a box, this line is for testing only
+    //addRigidBody(Vec3(), Vec3(0.5, 0.25, 0.25), 1, false, false);
+
+    for (int i = 0; i < rows; ++i)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            // Last parameter if true, the grid is a grid of spheres, false = grid of boxes
+            size_t rb = addRigidBody(Vec3(randPos(eng)), Vec3(0.5, 0.25, 0.25), 1, false, true);
+
+            if (j < cols - 1)
+                addSpring(i * cols + j, i * cols + j + 1, 1.0);
+
+            if (i < rows - 1)
+                addSpring(i * cols + j, (i + 1) * cols + j, 1.0);
+        }
+    }
+}
+
 
 void RigidBodySystemSimulator::setOrientationOf(int i, Quat orientation) {
     // make sure we use unit length orientation
