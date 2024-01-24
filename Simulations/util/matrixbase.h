@@ -598,12 +598,12 @@ matrix4x4<Scalar>::operator*( const vector3Dim<Scalar>& v) const
 	vector3Dim<Scalar> nvec(0.0);
 	for(int i=0; i<3; i++) {
 		for(int j=0; j<3; j++) {
-			nvec[i] += (v[j] * value[i][j]);
+			nvec[i] += (v[j] * value[j][i]);
 		}
 	}
 	// assume normalized w coord
 	for(int i=0; i<3; i++) {
-		nvec[i] += (1.0 * value[i][3]);
+		nvec[i] += (1.0 * value[3][i]);
 	}
   return nvec;
 }

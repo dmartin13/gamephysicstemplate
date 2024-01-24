@@ -4,6 +4,7 @@
 #include "collisionDetect.h"
 
 #define TESTCASEUSEDTORUNTEST 2
+#define SPHERERADIUS 0.01f
 
 struct Spring {
 
@@ -59,9 +60,11 @@ public:
     Vec3 getLinearVelocityOfRigidBody(int i);
     Vec3 getAngularVelocityOfRigidBody(int i);
     void applyForceOnBody(int i, Vec3 loc, Vec3 force);
-    size_t addRigidBody(Vec3 position, Vec3 size, int mass, bool fixed = false, bool isSphere = false);
-    size_t addRigidBodyInternal(Vec3 position, Vec3 size, int mass,
-        std::vector<RigidBody>& storage, bool fixed = false, bool isSphere = false);
+    size_t addRigidBody(Vec3 position, Vec3 size, float mass, bool fixed = false,
+        bool isSphere = false);
+    size_t addRigidBodyInternal(Vec3 position, Vec3 size, float mass,
+        std::vector<RigidBody>& storage,
+        bool fixed = false, bool isSphere = false);
     void setOrientationOf(int i, Quat orientation);
     void setVelocityOf(int i, Vec3 velocity);
     Mat4 calcWorldMatrix(RigidBody& rb);
@@ -82,6 +85,8 @@ public:
     void createSpringMesh(size_t m, size_t n, double spacing, Vec3 pos,
         double scale);
     void createGrid(size_t rows, size_t columns);
+    CollisionInfo checkCollisionSphere(RigidBody& rbA, RigidBody& rbB);
+    CollisionInfo checkCollisionSphereBox(RigidBody& rbA, RigidBody& rbB);
 
 private:
     // UI Attributes
