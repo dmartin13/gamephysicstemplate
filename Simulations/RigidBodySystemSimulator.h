@@ -8,13 +8,16 @@
 
 struct Spring {
 
-    Spring(int masspoint1, int masspoint2, float initialLength)
+    Spring(int masspoint1, int masspoint2, float initialLength,
+        std::array<Vec3, 2>& relativeApplicationOffsets)
         : _masspoint1(masspoint1), _masspoint2(masspoint2),
-        _initialLength(initialLength) {}
+        _initialLength(initialLength),
+        _relativeApplicationOffsets(relativeApplicationOffsets) {}
 
     int _masspoint1;
     int _masspoint2;
     float _initialLength;
+    std::array<Vec3, 2> _relativeApplicationOffsets;
 };
 
 struct RigidBody {
@@ -73,9 +76,9 @@ public:
     // mass spring system stuff
     void setStiffness(float stiffness);
     void setDampingFactor(float damping);
-    void setBounceFactor(float bounceFactor);
 
-    void addSpring(int masspoint1, int masspoint2, float initialLength);
+    void addSpring(int masspoint1, int masspoint2, float initialLength,
+        std::array<Vec3, 2>& relativeApplicationOffsets);
     int getNumberOfSprings();
     void computeForces(std::vector<RigidBody>& rigidBodies);
     void applyDamping(std::vector<RigidBody>& rigidBodies);
@@ -83,7 +86,7 @@ public:
     // helpers
     float degToRad(float degree);
     void createSpringMesh(size_t m, size_t n, double spacing, Vec3 pos,
-        double scale);
+        double scale, double mass);
     void createGrid(size_t rows, size_t columns);
     CollisionInfo checkCollisionSphere(RigidBody& rbA, RigidBody& rbB);
     CollisionInfo checkCollisionSphereBox(RigidBody& rbA, RigidBody& rbB);
@@ -99,17 +102,16 @@ private:
     float _gravity = 0;
 
     // Rigidbody parameters
+    float _mass;
     float _c = 1.;
+    float _sphereRadius = 0.01;
 
     // Rigid Bodies
     std::vector<RigidBody> _rigidBodies;
-    std::vector<RigidBody> _constRigidBodies;
 
     // Spring parameters
-    float _mass;
     float _stiffness;
     float _damping;
-    float _bounceFactor{ 0.0f };
 
     // Springs
     std::vector<Spring> _springs;

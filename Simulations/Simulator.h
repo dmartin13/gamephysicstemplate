@@ -8,6 +8,7 @@
 #include <iostream>
 #include "util/vectorbase.h"
 #include "DrawingUtilitiesClass.h"
+#include <array>
 
 struct Point2D {
 	int x,y;
