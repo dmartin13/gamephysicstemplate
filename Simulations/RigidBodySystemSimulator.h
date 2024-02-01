@@ -72,6 +72,8 @@ public:
     void setVelocityOf(int i, Vec3 velocity);
     Mat4 calcWorldMatrix(RigidBody& rb);
     void calculateImpulse(CollisionInfo& colInfo, RigidBody& rbA, RigidBody& rbB);
+    bool calcRayAABBIntersection(RigidBody& rb, Vec3 rayOrigin, Vec3 rayDirection,
+        Vec3& out);
 
     // mass spring system stuff
     void setStiffness(float stiffness);
@@ -104,6 +106,7 @@ private:
     // Rigidbody parameters
     float _mass;
     float _c = 1.;
+    float _forceFactor = 10.;
     float _sphereRadius = 0.01;
 
     // Rigid Bodies

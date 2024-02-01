@@ -83,6 +83,10 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     this->DUC = DUC;
     switch (m_iTestCase) {
     case 0: {
+
+        TwAddVarRW(DUC->g_pTweakBar, "Force Factor", TW_TYPE_FLOAT, &_forceFactor,
+            "min=0.0 max=100.0 step=1");
+
         reset();
 
         _mass = 1.f;
@@ -93,10 +97,13 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _damping = 0;
         _c = 1.;
 
-        size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
-        size_t rb1 = addRigidBody(Vec3(1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
-        addSpring(rb0, rb1, 1.0,
-            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0, 0, 0)}});
+        size_t rb0 = addRigidBody(Vec3(0, 0, 0), Vec3(0.5, 0.5, 0.5), _mass);
+        setOrientationOf(rb0, Quat(0, degToRad(45.), 0));
+
+        // size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
+        // size_t rb1 = addRigidBody(Vec3(1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
+        // addSpring(rb0, rb1, 1.0,
+        //           std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0, 0, 0)}});
     } break;
     case 1: {
         reset();
@@ -179,19 +186,18 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         size_t plane =
             addRigidBody(Vec3(0, 0.3, 0), Vec3(0.25, 0.05, 0.25), 1, false, false);
 
-        addSpring(
-            fixed0, plane, 0.1,
-            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.025, -0.125)}});
+        addSpring(fixed0, plane, 0.1,
+            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.0, -0.125)}});
         addSpring(fixed1, plane, 0.1,
-            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.025, 0.125)}});
-        //addSpring(fixed2, plane, 0.1,
-        //          std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.025, -0.125)}});
-        //addSpring(fixed3, plane, 0.1,
-        //          std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.025, 0.125)}});
+            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.0, 0.125)}});
+        addSpring(fixed2, plane, 0.1,
+            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, -0.125)}});
+        addSpring(fixed3, plane, 0.1,
+            std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, 0.125)}});
 
-        // size_t ball = addRigidBody(
-        //     Vec3(-0.1, 1, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
-        //     1, false, true);
+        size_t ball = addRigidBody(
+            Vec3(-0.1, 1, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1,
+            false, true);
 
         setOrientationOf(plane, Quat(0, degToRad(90.), 0));
 
@@ -264,7 +270,6 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase) {
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
     if (m_iTestCase == 3) {
-        // std::cout << "apply mouse" << std::endl;
         Point2D mouseDiff;
         mouseDiff.x = _trackmouse.x - _oldtrackmouse.x;
         mouseDiff.y = _trackmouse.y - _oldtrackmouse.y;
@@ -508,6 +513,110 @@ void RigidBodySystemSimulator::calculateImpulse(CollisionInfo& colInfo,
 void RigidBodySystemSimulator::onClick(int x, int y) {
     _trackmouse.x = x;
     _trackmouse.y = y;
+
+    RECT clientRect;
+    GetClientRect(DXUTGetHWND(), &clientRect);
+
+    const auto windowWidth = clientRect.right - clientRect.left;
+    const auto windowHeight = clientRect.bottom - clientRect.top;
+
+    // View and projection matrices
+    XMMATRIX viewMatrix = DUC->g_camera.GetViewMatrix();
+    XMMATRIX projectionMatrix = DUC->g_camera.GetProjMatrix();
+
+    // Convert mouse coordinates to normalized device coordinates (-1 to 1)
+    const auto ndcX =
+        (static_cast<double>(x) / static_cast<double>(windowWidth)) * 2.0 - 1.0;
+    const auto ndcY =
+        1.0 - (static_cast<double>(y) / static_cast<double>(windowHeight)) * 2.0;
+
+    // Create a ray in clip space
+    XMFLOAT4 rayClip(ndcX, ndcY, 1.0f, 1.0f);
+
+    XMVECTOR rayEye = XMVector4Transform(
+        XMLoadFloat4(&rayClip), XMMatrixInverse(nullptr, projectionMatrix));
+    rayEye = XMVectorSet(XMVectorGetX(rayEye), XMVectorGetY(rayEye), 1.0f, 0.0f);
+
+    // Ray in world space
+    XMVECTOR rayWorld =
+        XMVector4Transform(rayEye, XMMatrixInverse(nullptr, viewMatrix));
+
+    XMFLOAT3 rayDirectionDX;
+    XMStoreFloat3(&rayDirectionDX, rayWorld);
+
+    XMVECTOR camPos = DUC->g_camera.GetEyePt();
+    XMFLOAT3 camPosF;
+    XMStoreFloat3(&camPosF, camPos);
+
+    Vec3 rayOrigin(camPosF.x, camPosF.y, camPosF.z);
+    Vec3 rayDirection(rayDirectionDX.x, rayDirectionDX.y, rayDirectionDX.z);
+    rayDirection = getNormalized(rayDirection);
+
+    // std::cout << "rayOrigin: " << rayOrigin << std::endl;
+    // std::cout << "rayDirection: " << rayDirection << std::endl;
+
+    for (size_t i{ 0 }; i < _rigidBodies.size(); ++i) {
+        if (_rigidBodies[i].fixed || _rigidBodies[i].isSphere) {
+            continue;
+        }
+        Vec3 colPoint;
+        bool intersecting = calcRayAABBIntersection(_rigidBodies[i], rayOrigin,
+            rayDirection, colPoint);
+        if (intersecting) {
+            // std::cout << colPoint << std::endl;
+            applyForceOnBody(i, colPoint, rayDirection * _forceFactor);
+        }
+    }
+}
+
+bool RigidBodySystemSimulator::calcRayAABBIntersection(RigidBody& rb,
+    Vec3 rayOrigin,
+    Vec3 rayDirection,
+    Vec3& out) {
+
+    auto rbInverseWorld = rb.worldMatrix;
+    rbInverseWorld = rbInverseWorld.inverse();
+
+    // std::cout << "rbInverseWorld: " << rbInverseWorld << std::endl;
+    const auto temp2 = rbInverseWorld * rayDirection;
+    // std::cout << "rbInverseWorld * rayDirection: " << temp2 << std::endl;
+
+    const auto localRay = std::array<Vec3, 2>{
+        rbInverseWorld* rayOrigin, getNormalized(rbInverseWorld* rayDirection)};
+
+    // std::cout << "localRay[0]: " << localRay[0] << std::endl;
+    // std::cout << "localRay[1]: " << localRay[1] << std::endl;
+
+    Vec3 invRayDirection =
+        Vec3(1.0 / localRay[1].x, 1.0 / localRay[1].y, 1.0 / localRay[1].z);
+
+    const auto localBoxMin = Vec3(-0.5, -0.5, -0.5);
+    const auto localBoxMax = Vec3(0.5, 0.5, 0.5);
+
+    const auto tMin = (localBoxMin - localRay[0]) * invRayDirection;
+    const auto tMax = (localBoxMax - localRay[0]) * invRayDirection;
+
+    // std::cout << "tMin: " << tMin << std::endl;
+    // std::cout << "tMax: " << tMax << std::endl;
+
+    const auto t1 = Vec3(std::min(tMin.x, tMax.x), std::min(tMin.y, tMax.y),
+        std::min(tMin.z, tMax.z));
+    const auto t2 = Vec3(std::max(tMin.x, tMax.x), std::max(tMin.y, tMax.y),
+        std::max(tMin.z, tMax.z));
+
+    float tNear = std::max({ t1.x, t1.y, t1.z });
+    float tFar = std::min({ t2.x, t2.y, t2.z });
+
+    if (tNear > tFar || tFar < 0) {
+        // std::cout << "no intersection" << std::endl;
+        return false;
+    }
+    else {
+        // Transform intersection point back to world space
+        out = rayOrigin + tNear * rayDirection;
+        std::cout << "intersection" << std::endl;
+        return true;
+    }
 }
 
 void RigidBodySystemSimulator::onMouse(int x, int y) {
@@ -536,8 +645,8 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(int i) {
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force) {
     // calculate and accumulate the torque
     _rigidBodies[i].torque += cross((loc - _rigidBodies[i].position), force);
-    std::cout << cross((loc - _rigidBodies[i].position), force) << std::endl;
-    // accumulate the force
+    // std::cout << cross((loc - _rigidBodies[i].position), force) << std::endl;
+    //  accumulate the force
     _rigidBodies[i].force += force;
 }
 
