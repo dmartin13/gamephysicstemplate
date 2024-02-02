@@ -92,6 +92,7 @@ public:
     void createGrid(size_t rows, size_t columns);
     CollisionInfo checkCollisionSphere(RigidBody& rbA, RigidBody& rbB);
     CollisionInfo checkCollisionSphereBox(RigidBody& rbA, RigidBody& rbB);
+    Vec3 mulMat4Vec3(Mat4& mat, Vec3& vec);
 
 private:
     // UI Attributes
@@ -118,5 +119,9 @@ private:
 
     // Springs
     std::vector<Spring> _springs;
+
+    // tmp
+    Vec3 _rayOrigin;
+    Vec3 _rayDirection;
 };
 #endif
