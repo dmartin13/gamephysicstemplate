@@ -73,7 +73,9 @@ public:
     Mat4 calcWorldMatrix(RigidBody& rb);
     void calculateImpulse(CollisionInfo& colInfo, RigidBody& rbA, RigidBody& rbB);
     bool calcRayAABBIntersection(RigidBody& rb, Vec3 rayOrigin, Vec3 rayDirection,
-        float& tNear);
+        float& out);
+    bool calcRaySphereIntersection(RigidBody& rb, Vec3 rayOrigin,
+        Vec3 rayDirection, float& out);
 
     // mass spring system stuff
     void setStiffness(float stiffness);

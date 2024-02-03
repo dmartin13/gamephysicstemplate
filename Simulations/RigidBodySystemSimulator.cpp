@@ -226,11 +226,13 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _damping = 0;
         _c = 1.;
 
-
         size_t rb0 = addRigidBody(Vec3(0, 0, 0), Vec3(0.5, 0.5, 0.5), _mass);
         setOrientationOf(rb0, Quat(0, degToRad(45.), 0));
 
         size_t rb1 = addRigidBody(Vec3(0, 0.2, 1), Vec3(0.25, 0.25, 0.25), _mass);
+
+        size_t rb2 =
+            addRigidBody(Vec3(0, -0.1, 1), Vec3(0.1, 0.1, 0.1), _mass, false, true);
     } break;
     default:
         break;
@@ -607,12 +609,21 @@ void RigidBodySystemSimulator::onClick(int x, int y) {
     std::pair<float, size_t> minRB = { std::numeric_limits<float>::max(), -1 };
 
     for (size_t i{ 0 }; i < _rigidBodies.size(); ++i) {
-        if (_rigidBodies[i].fixed || _rigidBodies[i].isSphere) {
+        if (_rigidBodies[i].fixed) {
             continue;
         }
         float tNear;
-        bool intersecting = calcRayAABBIntersection(_rigidBodies[i], rayOrigin,
-            rayDirection, tNear);
+        bool intersecting = false;
+
+        if (_rigidBodies[i].isSphere) {
+            intersecting = calcRaySphereIntersection(_rigidBodies[i], rayOrigin,
+                rayDirection, tNear);
+        }
+        else {
+            intersecting = calcRayAABBIntersection(_rigidBodies[i], rayOrigin,
+                rayDirection, tNear);
+        }
+
         if (intersecting) {
             if (tNear < std::get<0>(minRB)) {
                 std::get<0>(minRB) = tNear;
@@ -704,6 +715,27 @@ bool RigidBodySystemSimulator::calcRayAABBIntersection(RigidBody& rb,
         // std::cout << "intersection" << std::endl;
         return true;
     }
+}
+
+bool RigidBodySystemSimulator::calcRaySphereIntersection(RigidBody& rb,
+    Vec3 rayOrigin,
+    Vec3 rayDirection,
+    float& out) {
+    const auto oc = rayOrigin - rb.position;
+    float a = dot(rayDirection, rayDirection);
+    float b = 2.0f * dot(oc, rayDirection);
+    float c = dot(oc, oc) - (rb.width * rb.width);
+    float discriminant = b * b - 4 * a * c;
+
+    // std::cout << discriminant << std::endl;
+
+    if (discriminant > 0) {
+        float t = (-b - sqrt(discriminant)) / (2.0f * a);
+        out = t;
+        return true;
+    }
+
+    return false;
 }
 
 void RigidBodySystemSimulator::onMouse(int x, int y) {
