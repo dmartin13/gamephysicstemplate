@@ -226,8 +226,11 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _damping = 0;
         _c = 1.;
 
+
         size_t rb0 = addRigidBody(Vec3(0, 0, 0), Vec3(0.5, 0.5, 0.5), _mass);
         setOrientationOf(rb0, Quat(0, degToRad(45.), 0));
+
+        size_t rb1 = addRigidBody(Vec3(0, 0.2, 1), Vec3(0.25, 0.25, 0.25), _mass);
     } break;
     default:
         break;
@@ -601,17 +604,26 @@ void RigidBodySystemSimulator::onClick(int x, int y) {
     // std::cout << "rayOrigin: " << rayOrigin << std::endl;
     // std::cout << "rayDirection: " << rayDirection << std::endl;
 
+    std::pair<float, size_t> minRB = { std::numeric_limits<float>::max(), -1 };
+
     for (size_t i{ 0 }; i < _rigidBodies.size(); ++i) {
         if (_rigidBodies[i].fixed || _rigidBodies[i].isSphere) {
             continue;
         }
-        Vec3 colPoint;
+        float tNear;
         bool intersecting = calcRayAABBIntersection(_rigidBodies[i], rayOrigin,
-            rayDirection, colPoint);
+            rayDirection, tNear);
         if (intersecting) {
+            if (tNear < std::get<0>(minRB)) {
+                std::get<0>(minRB) = tNear;
+                std::get<1>(minRB) = i;
+            }
             // std::cout << colPoint << std::endl;
-            applyForceOnBody(i, colPoint, rayDirection * _forceFactor);
         }
+    }
+    if (std::get<1>(minRB) != -1) {
+        Vec3 colPoint = rayOrigin + std::get<0>(minRB) * rayDirection;
+        applyForceOnBody(std::get<1>(minRB), colPoint, rayDirection * _forceFactor);
     }
 }
 
@@ -633,7 +645,7 @@ Vec3 RigidBodySystemSimulator::mulMat4Vec3(Mat4& mat, Vec3& vec) {
 bool RigidBodySystemSimulator::calcRayAABBIntersection(RigidBody& rb,
     Vec3 rayOrigin,
     Vec3 rayDirection,
-    Vec3& out) {
+    float& out) {
 
     auto rbInverseWorld = rb.worldMatrix;
     rbInverseWorld = rbInverseWorld.inverse();
@@ -687,7 +699,8 @@ bool RigidBodySystemSimulator::calcRayAABBIntersection(RigidBody& rb,
     }
     else {
         // Transform intersection point back to world space
-        out = rayOrigin + tNear * rayDirection;
+        // out = rayOrigin + tNear * rayDirection;
+        out = tNear;
         // std::cout << "intersection" << std::endl;
         return true;
     }
