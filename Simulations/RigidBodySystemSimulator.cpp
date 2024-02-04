@@ -155,6 +155,7 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _damping = 0.5;
         _sphereRadius = 0.1;
         _c = 1.;
+        _springForceScale = 2.f;
 
         TwAddVarRW(DUC->g_pTweakBar, "Mass Grid Spheres", TW_TYPE_FLOAT,
             &_massGridSpheres, "min=0.0 max=100.0 step=0.1");
@@ -228,6 +229,7 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     default:
         break;
     }
+    TwAddVarRW(DUC->g_pTweakBar, "Visualize Forces", TW_TYPE_BOOLCPP, &_visualizeSpringForces, "");
     TwAddVarRW(DUC->g_pTweakBar, "Force Factor", TW_TYPE_FLOAT, &_forceFactor,
         "min=0.0 max=100.0 step=1");
     TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &_damping,
@@ -267,14 +269,29 @@ void RigidBodySystemSimulator::drawFrame(
     }
     for (const auto& s : _springs) {
         // calc positions for line
-        const auto app1 = _rigidBodies[s._masspoint1].orientation.getRotMat() *
+        const auto offset1 = _rigidBodies[s._masspoint1].orientation.getRotMat() *
             s._relativeApplicationOffsets[0];
-        const auto app2 = _rigidBodies[s._masspoint2].orientation.getRotMat() *
+        const auto offset2 = _rigidBodies[s._masspoint2].orientation.getRotMat() *
             s._relativeApplicationOffsets[1];
+
+        const auto pos1 = _rigidBodies[s._masspoint1].position + offset1;
+        const auto pos2 = _rigidBodies[s._masspoint2].position + offset2;
+
+        Vec3 color(1.f, 0.f, 0.f);
+        if (_visualizeSpringForces) {
+            const auto dist = norm(pos1 - pos2);
+            auto ratio = s._initialLength / dist;
+            ratio = (ratio - 1) * _springForceScale + 1; // scale for a more dramatic effect :)
+            if (ratio <= 1.0) {
+                color = Vec3(1, 0, 0) * max(0., 1.0 - ratio) + Vec3(0, 1, 0) * min(1., ratio);
+            }
+            else {
+                color = Vec3(0, 1, 0) * max(0., (2.0 - ratio)) + Vec3(0, 0, 1) * min(1., ratio - 1.0);
+            }
+        }
+
         DUC->beginLine();
-        DUC->drawLine(
-            _rigidBodies[s._masspoint1].position + app1, Vec3(1.f, 0.f, 0.f),
-            _rigidBodies[s._masspoint2].position + app2, Vec3(1.f, 0.f, 0.f));
+        DUC->drawLine(pos1, color, pos2, color);
         DUC->endLine();
     }
     // for (const auto& rb : constRigidBodies) {

@@ -102,6 +102,8 @@ private:
     Point2D _mouse;
     Point2D _trackmouse;
     Point2D _oldtrackmouse;
+    bool _visualizeSpringForces = false;
+    float _springForceScale = 1.5f;
 
     // Attributes
     float _gravity = 0;
