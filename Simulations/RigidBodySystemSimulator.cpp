@@ -189,23 +189,26 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
             Vec3(0.5, 0, 0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             1, true, true);
 
-        size_t plane =
+        _demo4plane =
             addRigidBody(Vec3(0, 0, 0), Vec3(0.25, 0.05, 0.25), 1, false, false);
 
-        addSpring(fixed0, plane, 0.1,
+        addSpring(fixed0, _demo4plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.0, -0.125)}});
-        addSpring(fixed1, plane, 0.1,
+        addSpring(fixed1, _demo4plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.0, 0.125)}});
-        addSpring(fixed2, plane, 0.1,
+        addSpring(fixed2, _demo4plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, -0.125)}});
-        addSpring(fixed3, plane, 0.1,
+        addSpring(fixed3, _demo4plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, 0.125)}});
 
-        size_t ball = addRigidBody(
-            Vec3(-0.1, 0.2, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 0.1f,
-            false, true);
+        addRigidBody(Vec3(-0.1, 0.2, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            0.1f, false, true);
+        addRigidBody(Vec3(-0.08, 0.15, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            0.1f, false, true);
+        addRigidBody(Vec3(-0.1, 0.08, 0.1), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            0.1f, false, true);
 
-        setOrientationOf(plane, Quat(0, degToRad(0.), 0));
+        setOrientationOf(_demo4plane, Quat(0, degToRad(0.), 0));
 
     } break;
     case 5: {
@@ -246,6 +249,12 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         "min=0.05 max=2.0 step=0.05");
     TwAddVarRW(DUC->g_pTweakBar, "Size Sphere", TW_TYPE_FLOAT, &_sphereRadius,
         "min=0.05 max=2.0 step=0.05");
+
+    if (m_iTestCase == 4) {
+        TwAddSeparator(DUC->g_pTweakBar, "Scores", "");
+        TwAddVarRO(DUC->g_pTweakBar, "Min velocity", TW_TYPE_FLOAT, &_demo4minVelocity, "");
+        TwAddVarRO(DUC->g_pTweakBar, "Current velocity", TW_TYPE_FLOAT, &_demo4currentVelocity, "");
+    }
 }
 
 void RigidBodySystemSimulator::reset() {
@@ -357,6 +366,13 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
             }
         }
     }
+    else if (m_iTestCase == 4) {
+        static float time = 0;
+        time += timeElapsed;
+        if (time > 30000.f) {
+            _demo4isRunning = true;
+        }
+    }
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
@@ -432,6 +448,13 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
     // force computation of springs
     computeForces(_rigidBodies);
     applyDamping(_rigidBodies);
+
+    if (m_iTestCase == 4) {
+        _demo4currentVelocity = norm(_rigidBodies[_demo4plane].angularVelocity);
+        if (_demo4currentVelocity < _demo4minVelocity) {
+            _demo4minVelocity = _demo4currentVelocity;
+        }
+    }
 }
 
 CollisionInfo RigidBodySystemSimulator::checkCollisionSphere(RigidBody& rbA,
@@ -922,23 +945,23 @@ void RigidBodySystemSimulator::applyDamping(
 }
 
 void RigidBodySystemSimulator::onKey(UINT nChar) {
-    switch (nChar) {
-    case 0x53: {
-        if (m_iTestCase == 3) {
-            addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
-                Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1, false,
-                true);
+    if (m_iTestCase == 3 || m_iTestCase == 4) {
+        switch (nChar) {
+        case 0x53: {
+                addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
+                    Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1, false,
+                    true);
+            break;
         }
-        break;
-    }
-    case 0x43: {
-        if (m_iTestCase == 3) {
-            addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
-                Vec3(_rbSize, _rbSize, _rbSize), 1, false, false);
+        case 0x43: {
+            if (m_iTestCase == 3) {
+                addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
+                    Vec3(_rbSize, _rbSize, _rbSize), 1, false, false);
+            }
+            break;
         }
-        break;
-    }
-    default:
-        break;
+        default:
+            break;
+        }
     }
 }
