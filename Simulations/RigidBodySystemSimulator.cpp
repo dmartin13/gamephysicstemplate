@@ -201,15 +201,18 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         addSpring(fixed3, _demo4plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, 0.125)}});
 
-        addRigidBody(Vec3(-0.1, 0.2, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+        addRigidBody(Vec3(-0.1, 0.25, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             0.1f, false, true);
-        addRigidBody(Vec3(-0.08, 0.15, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+        addRigidBody(Vec3(-0.08, 0.2, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             0.1f, false, true);
-        addRigidBody(Vec3(-0.1, 0.08, 0.1), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+        addRigidBody(Vec3(-0.1, 0.15, 0.08), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             0.1f, false, true);
 
-        setOrientationOf(_demo4plane, Quat(0, degToRad(0.), 0));
-
+        // assign random initial angular momentum [0.4, 0.7]
+        float a = (std::rand() % 300 + 400) / 1000.f;
+        float b = (std::rand() % 300 + 400) / 1000.f;
+        float c = (std::rand() % 300 + 400) / 1000.f;
+        _rigidBodies[_demo4plane].angularMomentum = Vec3(a, b, c);
     } break;
     case 5: {
 
@@ -252,8 +255,9 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
 
     if (m_iTestCase == 4) {
         TwAddSeparator(DUC->g_pTweakBar, "Scores", "");
-        TwAddVarRO(DUC->g_pTweakBar, "Min velocity", TW_TYPE_FLOAT, &_demo4minVelocity, "");
         TwAddVarRO(DUC->g_pTweakBar, "Current velocity", TW_TYPE_FLOAT, &_demo4currentVelocity, "");
+        TwAddVarRO(DUC->g_pTweakBar, "Min velocity", TW_TYPE_FLOAT, &_demo4minVelocity, "");
+        TwAddVarRO(DUC->g_pTweakBar, "High score", TW_TYPE_UINT16, &_demo4maxScore, "");
     }
 }
 
@@ -366,13 +370,6 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed) {
             }
         }
     }
-    else if (m_iTestCase == 4) {
-        static float time = 0;
-        time += timeElapsed;
-        if (time > 30000.f) {
-            _demo4isRunning = true;
-        }
-    }
 }
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
@@ -451,8 +448,9 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep) {
 
     if (m_iTestCase == 4) {
         _demo4currentVelocity = norm(_rigidBodies[_demo4plane].angularVelocity);
-        if (_demo4currentVelocity < _demo4minVelocity) {
+        if (_demo4currentVelocity > 1e-04 && _demo4currentVelocity < _demo4minVelocity) {
             _demo4minVelocity = _demo4currentVelocity;
+            _demo4maxScore = 10'000 / _demo4minVelocity;
         }
     }
 }

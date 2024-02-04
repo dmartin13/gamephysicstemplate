@@ -107,9 +107,9 @@ private:
 
     // Demo 4 game
     size_t _demo4plane = 0;
-    bool _demo4isRunning = false;
     float _demo4minVelocity = std::numeric_limits<float>::infinity();
     float _demo4currentVelocity = std::numeric_limits<float>::infinity();
+    size_t _demo4maxScore = 0;
 
     // Attributes
     float _gravity = 0;
