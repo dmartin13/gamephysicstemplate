@@ -89,9 +89,8 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
 
         _mass = 1.f;
         _stiffness = 20.f;
-        _damping = 0.f;
+        _damping = 0.05f;
         _gravity = 0;
-        _damping = 0;
         _c = 1.;
 
         size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
@@ -107,7 +106,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _stiffness = 20.f;
         _damping = 0.f;
         _gravity = 0;
-        _damping = 0;
         _c = 1.;
 
         size_t rb0 = addRigidBody(Vec3(-1, 0, 0), Vec3(0.5, 0.25, 0.25), _mass);
@@ -122,7 +120,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _mass = 1.f;
         _stiffness = 100.f;
         _gravity = 0;
-        _damping = 0;
         _sphereRadius = 0.2;
         _c = 1.;
 
@@ -179,20 +176,20 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _c = 1.;
 
         size_t fixed0 = addRigidBody(
-            Vec3(-0.5, 0.5, -0.5),
+            Vec3(-0.5, 0, -0.5),
             Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1, true, true);
         size_t fixed1 = addRigidBody(
-            Vec3(-0.5, 0.5, 0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            Vec3(-0.5, 0, 0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             1, true, true);
         size_t fixed2 = addRigidBody(
-            Vec3(0.5, 0.5, -0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            Vec3(0.5, 0, -0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             1, true, true);
         size_t fixed3 = addRigidBody(
-            Vec3(0.5, 0.5, 0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
+            Vec3(0.5, 0, 0.5), Vec3(_sphereRadius, _sphereRadius, _sphereRadius),
             1, true, true);
 
         size_t plane =
-            addRigidBody(Vec3(0, 0.3, 0), Vec3(0.25, 0.05, 0.25), 1, false, false);
+            addRigidBody(Vec3(0, 0, 0), Vec3(0.25, 0.05, 0.25), 1, false, false);
 
         addSpring(fixed0, plane, 0.1,
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(-0.125, 0.0, -0.125)}});
@@ -204,10 +201,10 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
             std::array<Vec3, 2>{{Vec3(0, 0, 0), Vec3(0.125, 0.0, 0.125)}});
 
         size_t ball = addRigidBody(
-            Vec3(-0.1, 1, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1,
+            Vec3(-0.1, 0.2, 0), Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 0.1f,
             false, true);
 
-        setOrientationOf(plane, Quat(0, degToRad(90.), 0));
+        setOrientationOf(plane, Quat(0, degToRad(0.), 0));
 
     } break;
     case 5: {
@@ -218,7 +215,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _stiffness = 20.f;
         _damping = 0.f;
         _gravity = 0;
-        _damping = 0;
         _c = 1.;
 
         size_t rb0 = addRigidBody(Vec3(0, 0, 0), Vec3(0.5, 0.5, 0.5), _mass);
@@ -235,7 +231,7 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     TwAddVarRW(DUC->g_pTweakBar, "Force Factor", TW_TYPE_FLOAT, &_forceFactor,
         "min=0.0 max=100.0 step=1");
     TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &_damping,
-        "min=0.0 max=100.0 step=0.1");
+        "min=0.0 max=5.0 step=0.01");
     TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &_stiffness,
         "min=0.0 max=400.0 step=1");
     TwAddVarRW(DUC->g_pTweakBar, "C", TW_TYPE_FLOAT, &_c,
