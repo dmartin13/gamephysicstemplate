@@ -18,6 +18,7 @@ public:
 	void simulateTimestep(float timeStep);
 	void onClick(int x, int y);
 	void onMouse(int x, int y);
+	void onKey(UINT nChar);
 	// Specific Functions
 	void drawSomeRandomObjects();
 	void drawMovableTeapot();

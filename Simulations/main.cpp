@@ -186,7 +186,12 @@ void CALLBACK OnKeyboard( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserC
                     g_pFFmpegVideoRecorder->StopRecording();
                     SAFE_DELETE(g_pFFmpegVideoRecorder);
                 }
-            }			    
+				break;
+            }
+			default:
+			{
+				g_pSimulator->onKey(nChar);
+			}
 		}
 	}
 }

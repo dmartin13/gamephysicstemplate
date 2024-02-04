@@ -885,3 +885,22 @@ void RigidBodySystemSimulator::applyDamping(
         rb.force -= _damping * rb.linearVelocity;
     }
 }
+
+void RigidBodySystemSimulator::onKey(UINT nChar) {
+    switch (nChar) {
+    case 0x53: {
+        if (m_iTestCase == 3) {
+            addRigidBody(Vec3(0, 0.3, 0), Vec3(0.1, 0.1, 0.1), 1, false, true);
+        }
+        break;
+    }
+    case 0x43: {
+        if (m_iTestCase == 3) {
+            addRigidBody(Vec3(0, 0.3, 0), Vec3(0.2, 0.2, 0.2), 1, false, false);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
