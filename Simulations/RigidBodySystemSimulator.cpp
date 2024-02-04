@@ -571,50 +571,6 @@ void RigidBodySystemSimulator::onClick(int x, int y) {
     _trackmouse.x = x;
     _trackmouse.y = y;
 
-    RECT clientRect;
-    GetClientRect(DXUTGetHWND(), &clientRect);
-
-    const auto windowWidth = clientRect.right - clientRect.left;
-    const auto windowHeight = clientRect.bottom - clientRect.top;
-
-    // View and projection matrices
-    XMMATRIX viewMatrix = DUC->g_camera.GetViewMatrix();
-    XMMATRIX projectionMatrix = DUC->g_camera.GetProjMatrix();
-
-    // Convert mouse coordinates to normalized device coordinates (-1 to 1)
-    const auto ndcX =
-        (static_cast<double>(x) / static_cast<double>(windowWidth)) * 2.0 - 1.0;
-    const auto ndcY =
-        1.0 - (static_cast<double>(y) / static_cast<double>(windowHeight)) * 2.0;
-
-    // Create a ray in clip space
-    XMFLOAT4 rayClip(ndcX, ndcY, 1.0f, 1.0f);
-
-    XMVECTOR rayEye = XMVector4Transform(
-        XMLoadFloat4(&rayClip), XMMatrixInverse(nullptr, projectionMatrix));
-    rayEye = XMVectorSet(XMVectorGetX(rayEye), XMVectorGetY(rayEye), 1.0f, 0.0f);
-
-    // Ray in world space
-    XMVECTOR rayWorld =
-        XMVector4Transform(rayEye, XMMatrixInverse(nullptr, viewMatrix));
-
-    XMFLOAT3 rayDirectionDX;
-    XMStoreFloat3(&rayDirectionDX, rayWorld);
-
-    XMVECTOR camPos = DUC->g_camera.GetEyePt();
-    XMFLOAT3 camPosF;
-    XMStoreFloat3(&camPosF, camPos);
-
-    Vec3 rayOrigin(camPosF.x, camPosF.y, camPosF.z);
-    Vec3 rayDirection(rayDirectionDX.x, rayDirectionDX.y, rayDirectionDX.z);
-    rayDirection = getNormalized(rayDirection);
-
-    _rayOrigin = rayOrigin;
-    _rayDirection = rayDirection;
-
-    // std::cout << "rayOrigin: " << rayOrigin << std::endl;
-    // std::cout << "rayDirection: " << rayDirection << std::endl;
-
     std::pair<float, size_t> minRB = { std::numeric_limits<float>::max(), -1 };
 
     for (size_t i{ 0 }; i < _rigidBodies.size(); ++i) {
@@ -625,12 +581,12 @@ void RigidBodySystemSimulator::onClick(int x, int y) {
         bool intersecting = false;
 
         if (_rigidBodies[i].isSphere) {
-            intersecting = calcRaySphereIntersection(_rigidBodies[i], rayOrigin,
-                rayDirection, tNear);
+            intersecting = calcRaySphereIntersection(_rigidBodies[i], _rayOrigin,
+                _rayDirection, tNear);
         }
         else {
-            intersecting = calcRayAABBIntersection(_rigidBodies[i], rayOrigin,
-                rayDirection, tNear);
+            intersecting = calcRayAABBIntersection(_rigidBodies[i], _rayOrigin,
+                _rayDirection, tNear);
         }
 
         if (intersecting) {
@@ -642,8 +598,8 @@ void RigidBodySystemSimulator::onClick(int x, int y) {
         }
     }
     if (std::get<1>(minRB) != -1) {
-        Vec3 colPoint = rayOrigin + std::get<0>(minRB) * rayDirection;
-        applyForceOnBody(std::get<1>(minRB), colPoint, rayDirection * _forceFactor);
+        Vec3 colPoint = _rayOrigin + std::get<0>(minRB) * _rayDirection;
+        applyForceOnBody(std::get<1>(minRB), colPoint, _rayDirection * _forceFactor);
     }
 }
 
@@ -752,6 +708,61 @@ void RigidBodySystemSimulator::onMouse(int x, int y) {
     _oldtrackmouse.y = y;
     _trackmouse.x = x;
     _trackmouse.y = y;
+
+    RECT clientRect;
+    GetClientRect(DXUTGetHWND(), &clientRect);
+
+    const auto windowWidth = clientRect.right - clientRect.left;
+    const auto windowHeight = clientRect.bottom - clientRect.top;
+
+    // View and projection matrices
+    XMMATRIX viewMatrix = DUC->g_camera.GetViewMatrix();
+    XMMATRIX projectionMatrix = DUC->g_camera.GetProjMatrix();
+
+    // Convert mouse coordinates to normalized device coordinates (-1 to 1)
+    const auto ndcX =
+        (static_cast<double>(x) / static_cast<double>(windowWidth)) * 2.0 - 1.0;
+    const auto ndcY =
+        1.0 - (static_cast<double>(y) / static_cast<double>(windowHeight)) * 2.0;
+
+    // Create a ray in clip space
+    XMFLOAT4 rayClip(ndcX, ndcY, 1.0f, 1.0f);
+
+    XMVECTOR rayEye = XMVector4Transform(
+        XMLoadFloat4(&rayClip), XMMatrixInverse(nullptr, projectionMatrix));
+    rayEye = XMVectorSet(XMVectorGetX(rayEye), XMVectorGetY(rayEye), 1.0f, 0.0f);
+
+    // Ray in world space
+    XMVECTOR rayWorld =
+        XMVector4Transform(rayEye, XMMatrixInverse(nullptr, viewMatrix));
+
+    XMFLOAT3 rayDirectionDX;
+    XMStoreFloat3(&rayDirectionDX, rayWorld);
+
+    XMVECTOR camPos = DUC->g_camera.GetEyePt();
+    XMFLOAT3 camPosF;
+    XMStoreFloat3(&camPosF, camPos);
+
+    Vec3 rayOrigin(camPosF.x, camPosF.y, camPosF.z);
+    Vec3 rayDirection(rayDirectionDX.x, rayDirectionDX.y, rayDirectionDX.z);
+    rayDirection = getNormalized(rayDirection);
+
+    _rayOrigin = rayOrigin;
+    _rayDirection = rayDirection;
+
+    // Calculate intersection with ground plane
+    Vec3 normal(0, 1, 0);
+    float d = 0;
+    float denom = dot(rayDirection, normal);
+    if (abs(denom) >= 1e-4f) {
+        float t = -(dot(normal, rayOrigin) + d) / denom;
+        if (t > 1e-4) {
+            _intersectionWithGroundPlane = rayOrigin + t * rayDirection;
+        }
+    }
+
+    // std::cout << "rayOrigin: " << rayOrigin << std::endl;
+    // std::cout << "rayDirection: " << rayDirection << std::endl;
 }
 
 int RigidBodySystemSimulator::getNumberOfRigidBodies() {
@@ -899,7 +910,7 @@ void RigidBodySystemSimulator::onKey(UINT nChar) {
     switch (nChar) {
     case 0x53: {
         if (m_iTestCase == 3) {
-            addRigidBody(Vec3(0, 0.3, 0),
+            addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
                 Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1, false,
                 true);
         }
@@ -907,8 +918,8 @@ void RigidBodySystemSimulator::onKey(UINT nChar) {
     }
     case 0x43: {
         if (m_iTestCase == 3) {
-            addRigidBody(Vec3(0, 0.3, 0), Vec3(_rbSize, _rbSize, _rbSize), 1, false,
-                false);
+            addRigidBody(_intersectionWithGroundPlane + Vec3(0, 0.3, 0),
+                Vec3(_rbSize, _rbSize, _rbSize), 1, false, false);
         }
         break;
     }

@@ -127,5 +127,6 @@ private:
     // tmp
     Vec3 _rayOrigin;
     Vec3 _rayDirection;
+    Vec3 _intersectionWithGroundPlane;
 };
 #endif
