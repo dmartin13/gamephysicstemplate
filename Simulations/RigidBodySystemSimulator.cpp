@@ -76,7 +76,8 @@ RigidBodySystemSimulator::RigidBodySystemSimulator() {
 }
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
-    return "Demo1,Demo2,Demo3,Demo4,Demo5,Demo6";
+    return "Spring RB Basic,Spring RB Offset,Sphere RBs,Net RB,Rel Offset "
+        "Implulse,Force Apply";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
@@ -89,7 +90,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _mass = 1.f;
         _stiffness = 20.f;
         _damping = 0.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
         _gravity = 0;
         _damping = 0;
         _c = 1.;
@@ -106,7 +106,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _mass = 1.f;
         _stiffness = 20.f;
         _damping = 0.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
         _gravity = 0;
         _damping = 0;
         _c = 1.;
@@ -122,7 +121,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
 
         _mass = 1.f;
         _stiffness = 100.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
         _gravity = 0;
         _damping = 0;
         _sphereRadius = 0.2;
@@ -156,16 +154,15 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
 
         _mass = 1.f;
         _stiffness = 400.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
-        _gravity = -1.;
+        _gravity = -9.81;
         _damping = 0.5;
-        _sphereRadius = 0.01;
+        _sphereRadius = 0.1;
         _c = 1.;
 
-        float massGridSpheres = 0.1;
+        TwAddVarRW(DUC->g_pTweakBar, "Mass Grid Spheres", TW_TYPE_FLOAT,
+            &_massGridSpheres, "min=0.0 max=100.0 step=0.1");
 
-        createSpringMesh(25, 25, 0.04, Vec3(-0.5, 0, -0.5), _sphereRadius,
-            massGridSpheres);
+        createSpringMesh(25, 25, 0.04, Vec3(-0.5, 0, -0.5), 0.01, _massGridSpheres);
 
         size_t anotherRB =
             addRigidBody(Vec3(0, 0.2, 0), Vec3(0.2, 0.2, 0.2), _mass);
@@ -176,7 +173,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
 
         _mass = 1.f;
         _stiffness = 200.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
         _gravity = -9.81;
         _damping = 1;
         _sphereRadius = 0.01;
@@ -221,7 +217,6 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
         _mass = 1.f;
         _stiffness = 20.f;
         _damping = 0.f;
-        _externalForce = Vec3(0.f, 0.f, 0.f);
         _gravity = 0;
         _damping = 0;
         _c = 1.;
@@ -239,6 +234,20 @@ void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
     }
     TwAddVarRW(DUC->g_pTweakBar, "Force Factor", TW_TYPE_FLOAT, &_forceFactor,
         "min=0.0 max=100.0 step=1");
+    TwAddVarRW(DUC->g_pTweakBar, "Damping", TW_TYPE_FLOAT, &_damping,
+        "min=0.0 max=100.0 step=0.1");
+    TwAddVarRW(DUC->g_pTweakBar, "Stiffness", TW_TYPE_FLOAT, &_stiffness,
+        "min=0.0 max=400.0 step=1");
+    TwAddVarRW(DUC->g_pTweakBar, "C", TW_TYPE_FLOAT, &_c,
+        "min=0.0 max=1.0 step=0.05");
+    TwAddVarRW(DUC->g_pTweakBar, "Gravity", TW_TYPE_FLOAT, &_gravity,
+        "min=-100 max=0 step=1");
+    TwAddVarRW(DUC->g_pTweakBar, "Mass RB", TW_TYPE_FLOAT, &_mass,
+        "min=0.0 max=100.0 step=1");
+    TwAddVarRW(DUC->g_pTweakBar, "Size Cube", TW_TYPE_FLOAT, &_rbSize,
+        "min=0.05 max=2.0 step=0.05");
+    TwAddVarRW(DUC->g_pTweakBar, "Size Sphere", TW_TYPE_FLOAT, &_sphereRadius,
+        "min=0.05 max=2.0 step=0.05");
 }
 
 void RigidBodySystemSimulator::reset() {
@@ -867,17 +876,15 @@ void RigidBodySystemSimulator::computeForces(
     for (auto& s : _springs) {
         auto rb1 = rigidBodies[s._masspoint1];
         auto rb2 = rigidBodies[s._masspoint2];
-
-        auto end1 = rb1.position + s._relativeApplicationOffsets[0];
-        auto end2 = rb2.position + s._relativeApplicationOffsets[1];
-
-        Vec3 d = end1 - end2;
+        Vec3 d = rb1.position - rb2.position;
         float dist = sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
         Vec3 f1 = -_stiffness * (dist - s._initialLength) * (d / dist);
         Vec3 f2 = -f1;
 
-        applyForceOnBody(s._masspoint1, end1, f1);
-        applyForceOnBody(s._masspoint2, end2, f2);
+        applyForceOnBody(s._masspoint1,
+            rb1.position + s._relativeApplicationOffsets[0], f1);
+        applyForceOnBody(s._masspoint2,
+            rb2.position + s._relativeApplicationOffsets[1], f2);
     }
 }
 
@@ -892,13 +899,16 @@ void RigidBodySystemSimulator::onKey(UINT nChar) {
     switch (nChar) {
     case 0x53: {
         if (m_iTestCase == 3) {
-            addRigidBody(Vec3(0, 0.3, 0), Vec3(0.1, 0.1, 0.1), 1, false, true);
+            addRigidBody(Vec3(0, 0.3, 0),
+                Vec3(_sphereRadius, _sphereRadius, _sphereRadius), 1, false,
+                true);
         }
         break;
     }
     case 0x43: {
         if (m_iTestCase == 3) {
-            addRigidBody(Vec3(0, 0.3, 0), Vec3(0.2, 0.2, 0.2), 1, false, false);
+            addRigidBody(Vec3(0, 0.3, 0), Vec3(_rbSize, _rbSize, _rbSize), 1, false,
+                false);
         }
         break;
     }

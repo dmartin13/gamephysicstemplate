@@ -104,14 +104,15 @@ private:
     Point2D _oldtrackmouse;
 
     // Attributes
-    Vec3 _externalForce;
     float _gravity = 0;
 
     // Rigidbody parameters
     float _mass;
+    float _massGridSpheres = 0.1;
     float _c = 1.;
-    float _forceFactor = 10.;
-    float _sphereRadius = 0.01;
+    float _forceFactor = 30.;
+    float _sphereRadius = 0.1;
+    float _rbSize = 0.1;
 
     // Rigid Bodies
     std::vector<RigidBody> _rigidBodies;
