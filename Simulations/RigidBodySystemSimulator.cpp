@@ -76,8 +76,7 @@ RigidBodySystemSimulator::RigidBodySystemSimulator() {
 }
 
 const char* RigidBodySystemSimulator::getTestCasesStr() {
-    return "Spring RB Basic,Spring RB Offset,Sphere RBs,Net RB,Rel Offset "
-        "Implulse,Force Apply";
+    return "Spring RB Basic,Spring RB Offset,Sphere RBs,Net RB,Slow down!,Force Apply";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC) {
