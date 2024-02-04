@@ -900,15 +900,17 @@ void RigidBodySystemSimulator::computeForces(
     for (auto& s : _springs) {
         auto rb1 = rigidBodies[s._masspoint1];
         auto rb2 = rigidBodies[s._masspoint2];
-        Vec3 d = rb1.position - rb2.position;
+
+        auto end1 = rb1.position + s._relativeApplicationOffsets[0];
+        auto end2 = rb2.position + s._relativeApplicationOffsets[1];
+
+        Vec3 d = end1 - end2;
         float dist = sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
         Vec3 f1 = -_stiffness * (dist - s._initialLength) * (d / dist);
         Vec3 f2 = -f1;
 
-        applyForceOnBody(s._masspoint1,
-            rb1.position + s._relativeApplicationOffsets[0], f1);
-        applyForceOnBody(s._masspoint2,
-            rb2.position + s._relativeApplicationOffsets[1], f2);
+        applyForceOnBody(s._masspoint1, end1, f1);
+        applyForceOnBody(s._masspoint2, end2, f2);
     }
 }
 
